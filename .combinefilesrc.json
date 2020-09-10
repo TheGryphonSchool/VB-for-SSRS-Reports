@@ -1,6 +1,7 @@
 {
     "fileGroups": [
         {
+            "groupName": "Mark_12",
             "outputFileName": "Mark_12/_Mark_12.vb",
             "fileGlobs": [
                 "Mark_12/[!_]*.vb",
@@ -15,6 +16,7 @@
             "includeToc": false
         },
         {
+            "groupName": "Report_6",
             "outputFileName": "Report_6/_Report_6.vb",
             "fileGlobs": [
                 "Report_6/[!_]*.vb",
