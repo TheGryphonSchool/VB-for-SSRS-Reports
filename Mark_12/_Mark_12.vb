@@ -35,12 +35,14 @@ Public NotInheritable Class ParamLookups
     End Sub
 End Class
 
+' Return the first param that matches the search_item
 Overloads Public Function lookupParam(value_or_label As String, _
                             search_item As Object, _
                             param As Object) As Object
     Return _lookupParam(value_or_label, search_item, param)
 End Function
 
+' Return the nth param that matches the search_item
 Overloads Public Function lookupParam(value_or_label As String, _
                             search_item As Object, _
                             param As Object, _
@@ -48,6 +50,7 @@ Overloads Public Function lookupParam(value_or_label As String, _
     Return _lookupParam(value_or_label, search_item, param, nth_match)
 End Function
 
+' Basic, with caching
 Overloads Public Function lookupParam(value_or_label As String, _
                             search_item As Object, _
                             param As Object, _
@@ -55,19 +58,12 @@ Overloads Public Function lookupParam(value_or_label As String, _
     Return _lookupParam(value_or_label, search_item, param, 1, caching)
 End Function
 
-Overloads Public Function lookupParam(value_or_label As String, _
-                            search_item As Object, _
-                            param As Object, _
-                            nth_match As Integer, _
-                            caching As Boolean) As Object
-    Return _lookupParam(value_or_label, search_item, param, nth_match, caching)
-End Function
-
+' Workhorse delegated to by all the overloads
 Private Function _lookupParam(value_or_label As String, _
-                             Optional search_item As Object = Nothing, _
-                             param As Object, _
-                             Optional nth_match As Integer = 1, _
-                             Optional caching As Boolean = False) As Object
+                              search_item As Object, _
+                              param As Object, _
+                              Optional nth_match As Integer = 1, _
+                              Optional caching As Boolean = False) As Object
     Dim searches As Object()
     Dim results As Object()
     Dim found_count = 0
@@ -119,4 +115,29 @@ Public Function isInParam(value_or_label As String, _
     Dim lookups As Object() = _
         IIf(value_or_label.toLower() = "value", param.Value, param.Label)
     Return Array.IndexOf(lookups, search_item) >= 0
+End Function
+
+Public Function lookupAllMatchingParams(value_or_label As String, _
+                                        search_item As Object, _
+                                        param As Object) As Object()
+    Dim searches As Object()
+    Dim results As Object()
+    Dim finds As Object()
+    Dim found_count As Integer = 0
+    value_or_label = value_or_label.toLower()
+    If param.IsMultiValue Then
+        searches = IIf(value_or_label = "value", param.Value, param.Label)
+        results = IIf(value_or_label = "value", param.Label, param.Value)
+        For i As Integer = 0 To param.Count -1
+            If searches(i) = search_item Then
+                ReDim Preserve finds(found_count)
+                finds(found_count) = results(i)
+                found_count += 1
+            End If
+        Next i
+    ElseIf search_item = IIf(value_or_label = "value", param.Value, param.Label)
+        Redim Preserve finds(0)
+        finds(0) = IIf(value_or_label = "value", param.Label, param.Value)
+    End If
+    Return finds
 End Function

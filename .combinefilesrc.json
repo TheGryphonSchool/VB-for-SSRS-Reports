@@ -22,8 +22,7 @@
                 "Report_6/[!_]*.vb",
                 "utilities/arrays.vb",
                 "utilities/colour_scale.vb",
-                "utilities/lookup_params.vb",
-                "utilities/strings.vb"
+                "utilities/lookup_params.vb"
             ],
             "fileHeader": [
                 "'File produced by combining files using the Combine Files VScode extension"

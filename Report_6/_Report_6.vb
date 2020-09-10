@@ -36,6 +36,53 @@ Public Function highlightGrade(group_id As Integer, _
     Return bad
 End Function
 
+'C:\USERS\ZAC\PROJECTS\SSRS CODE\REPORT_6\MISCELLANEOUS.VB
+Public Function roundIfFloat(float As String) As String
+    If float.Contains(".0") Then
+        Return CStr(CInt(float))
+    End If
+    Return float
+End Function
+
+Public Function averageIfNumeric(ranks As String) As Integer
+    Return averageArray(Split(ranks, ", "))
+End Function
+
+Public Function lookupCleanedJoinedGrades(value_or_label As String, _
+                                          group_learner_column As Object, _
+                                          grades_param As Object) As String
+    Return cleanAndJoin(lookupAllMatchingParams(value_or_label, _
+                                                group_learner_column, _
+                                                grades_param))
+End Function
+
+Private Function cleanAndJoin(items As Object()) As String 
+    Dim output As String = ""
+    Dim output_length As Integer
+    Dim unique_items As New System.Collections.Generic.List(Of Object)
+    If items Is Nothing Then
+        Return output
+    End If
+    For Each item As Object In items
+        If Not unique_items.contains(item) Then
+            unique_items.Add(item)
+            If Not TypeOf item Is String Then
+                item = TryCast(item, String)
+                output += (item OrElse "can't convert to string") & ", "
+            End If
+            If item.Contains(".0") Then
+                item = item.Substring(0, item.IndexOf(".0"))
+            End If
+            output += item & ", "
+        End If
+    Next item
+    output_length = output.Length()
+    If output_length = 0 Then
+        Return output
+    End If
+    Return output.Substring(0, output_length - 2)
+End Function
+
 'C:\USERS\ZAC\PROJECTS\SSRS CODE\REPORT_6\RANK_CHECKER.VB
 Public Class RankChecker
     Public badRanks As New System.Collections.Generic.List(Of Integer)
@@ -241,12 +288,14 @@ Public NotInheritable Class ParamLookups
     End Sub
 End Class
 
+' Return the first param that matches the search_item
 Overloads Public Function lookupParam(value_or_label As String, _
                             search_item As Object, _
                             param As Object) As Object
     Return _lookupParam(value_or_label, search_item, param)
 End Function
 
+' Return the nth param that matches the search_item
 Overloads Public Function lookupParam(value_or_label As String, _
                             search_item As Object, _
                             param As Object, _
@@ -254,6 +303,7 @@ Overloads Public Function lookupParam(value_or_label As String, _
     Return _lookupParam(value_or_label, search_item, param, nth_match)
 End Function
 
+' Basic, with caching
 Overloads Public Function lookupParam(value_or_label As String, _
                             search_item As Object, _
                             param As Object, _
@@ -261,19 +311,12 @@ Overloads Public Function lookupParam(value_or_label As String, _
     Return _lookupParam(value_or_label, search_item, param, 1, caching)
 End Function
 
-Overloads Public Function lookupParam(value_or_label As String, _
-                            search_item As Object, _
-                            param As Object, _
-                            nth_match As Integer, _
-                            caching As Boolean) As Object
-    Return _lookupParam(value_or_label, search_item, param, nth_match, caching)
-End Function
-
+' Workhorse delegated to by all the overloads
 Private Function _lookupParam(value_or_label As String, _
-                             Optional search_item As Object = Nothing, _
-                             param As Object, _
-                             Optional nth_match As Integer = 1, _
-                             Optional caching As Boolean = False) As Object
+                              search_item As Object, _
+                              param As Object, _
+                              Optional nth_match As Integer = 1, _
+                              Optional caching As Boolean = False) As Object
     Dim searches As Object()
     Dim results As Object()
     Dim found_count = 0
@@ -327,10 +370,27 @@ Public Function isInParam(value_or_label As String, _
     Return Array.IndexOf(lookups, search_item) >= 0
 End Function
 
-'C:\USERS\ZAC\PROJECTS\SSRS CODE\UTILITIES\STRINGS.VB
-Public Function roundIfFloat(float As String) As String
-    If Not float.Contains(".0") Then
-        Return float
+Public Function lookupAllMatchingParams(value_or_label As String, _
+                                        search_item As Object, _
+                                        param As Object) As Object()
+    Dim searches As Object()
+    Dim results As Object()
+    Dim finds As Object()
+    Dim found_count As Integer = 0
+    value_or_label = value_or_label.toLower()
+    If param.IsMultiValue Then
+        searches = IIf(value_or_label = "value", param.Value, param.Label)
+        results = IIf(value_or_label = "value", param.Label, param.Value)
+        For i As Integer = 0 To param.Count -1
+            If searches(i) = search_item Then
+                ReDim Preserve finds(found_count)
+                finds(found_count) = results(i)
+                found_count += 1
+            End If
+        Next i
+    ElseIf search_item = IIf(value_or_label = "value", param.Value, param.Label)
+        Redim Preserve finds(0)
+        finds(0) = IIf(value_or_label = "value", param.Label, param.Value)
     End If
-    Return CStr(CInt(float))
+    Return finds
 End Function
