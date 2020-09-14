@@ -5,6 +5,13 @@ Public Function roundIfFloat(float As String) As String
     Return float
 End Function
 
+Public Function averageIfNumeric(ranks As String) As Integer
+    If ranks is Nothing Then
+        Return 0
+    End If
+    Return averageArray(ranks.Split(", "))
+End Function
+
 Public Function lookupCleanedJoinedGrades(value_or_label As String, _
                                           group_learner_column As Object, _
                                           grades_param As Object) As String
