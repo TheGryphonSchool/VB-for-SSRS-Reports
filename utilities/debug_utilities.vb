@@ -13,9 +13,11 @@ Public Function listProperties(obj As Object) As String
     Next
 End Function
 
-Public Function debugRankChecker(group_code As String) As String
-    debugRankChecker = "BADDIES: "
-    For Each bad_rank As Integer In rank_checkers(group_code).badRanks
-        debugRankChecker += CStr(bad_rank) + ", "
-    Next bad_rank 
+Public Function paramToS(param As Object) As String
+    Dim labels(param.Count - 1) As Object
+    Array.copy(param.Label, labels, param.Count)
+    Array.sort(labels)
+    For Each label As Object In labels
+        paramToS += label  & ": " & lookupParam("label", label, param) & ", "
+    Next label
 End Function

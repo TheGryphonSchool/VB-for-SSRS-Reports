@@ -104,7 +104,7 @@ Public Function lookupNthParam(value_or_label As String, _
     If number <= param.Count Then
         Return results(number - 1)
     End If
-    'Return nothing if parameter doesn't have that number of items
+    Return Nothing 'if parameter doesn't have that number of items
 End Function
 
 Public Function isInParam(value_or_label As String, _
@@ -117,25 +117,53 @@ End Function
 
 Public Function lookupAllMatchingParams(value_or_label As String, _
                                         search_item As Object, _
-                                        param As Object) As Object()
+                                        param As Object, _
+                                        Optional contains As Boolean = False) _
+                As Object()
     Dim searches As Object()
     Dim results As Object()
-    Dim finds As Object()
+    Dim finds As Object() = {}
     Dim found_count As Integer = 0
+    Dim is_match As Boolean
+    Dim search As Object
+    Dim result As Object
+
     value_or_label = value_or_label.toLower()
     If param.IsMultiValue Then
         searches = IIf(value_or_label = "value", param.Value, param.Label)
         results = IIf(value_or_label = "value", param.Label, param.Value)
+        If contains AndAlso (Not TypeOf search_item Is String OrElse _
+                            searches.Length > 0 OrElse _
+                            Not TypeOf searches(0) Is String) Then
+            contains = False
+        End If
         For i As Integer = 0 To param.Count -1
-            If searches(i) = search_item Then
+            If contains Then
+                is_match = searches(i).Contains(search_item)
+            Else
+                is_match = (searches(i) = search_item)
+            End If
+            If is_match Then
                 ReDim Preserve finds(found_count)
                 finds(found_count) = results(i)
                 found_count += 1
             End If
         Next i
-    ElseIf search_item = IIf(value_or_label = "value", param.Value, param.Label)
-        Redim Preserve finds(0)
-        finds(0) = IIf(value_or_label = "value", param.Label, param.Value)
+    Else
+        search = IIf(value_or_label = "value", param.Value, param.Label)
+        result = IIf(value_or_label = "value", param.Label, param.Value)
+        If contains AndAlso Not TypeOf search Is String Then
+            contains = False
+        End If
+        If contains Then
+            is_match = search.Contains(search_item)
+        Else
+            is_match = (search_item = search)
+        End If
+        If is_match
+            Redim Preserve finds(0)
+            finds(0) = result
+        End If
     End If
     Return finds
 End Function

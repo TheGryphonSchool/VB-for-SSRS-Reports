@@ -59,7 +59,7 @@ Public Function lookupCleanedJoinedGrades(value_or_label As String, _
                                                 grades_param))
 End Function
 
-Private Function cleanAndJoin(items As Object()) As String 
+Private Function cleanAndJoin(items As Object()) As String
     Dim output As String = ""
     Dim output_length As Integer
     Dim unique_items As New System.Collections.Generic.List(Of Object)
@@ -67,15 +67,15 @@ Private Function cleanAndJoin(items As Object()) As String
         Return output
     End If
     For Each item As Object In items
+        If Not TypeOf item Is String Then
+            item = TryCast(item, String)
+            item = IIf(item, item, "can't convert to string")
+        End If
+        If item.Contains(".0") Then
+            item = item.Substring(0, item.IndexOf(".0"))
+        End If
         If Not unique_items.contains(item) Then
             unique_items.Add(item)
-            If Not TypeOf item Is String Then
-                item = TryCast(item, String)
-                output += (item OrElse "can't convert to string") & ", "
-            End If
-            If item.Contains(".0") Then
-                item = item.Substring(0, item.IndexOf(".0"))
-            End If
             output += item & ", "
         End If
     Next item
@@ -180,11 +180,18 @@ Public Function removeDuplicates(items As Object()) As Object()
     Return items
 End Function
 
-Public Function AverageCollection(items As Object()) As Double
+Public Function averageArray(items As Object()) As Double
 	Dim sum as Double = 0
 	Dim count as Integer = 0
 	For Each item As Double In items
-		sum += item
+		If Not IsNumeric(item) Then
+            Try
+                item = CDbl(item) 
+            Catch _ex As Exception
+                item = 0
+            End Try
+        End If
+        sum += item
 		count += 1
 	Next item
 	If count = 0 Then
@@ -362,7 +369,7 @@ Public Function lookupNthParam(value_or_label As String, _
     If number <= param.Count Then
         Return results(number - 1)
     End If
-    'Return nothing if parameter doesn't have that number of items
+    Return Nothing 'if parameter doesn't have that number of items
 End Function
 
 Public Function isInParam(value_or_label As String, _
@@ -375,25 +382,52 @@ End Function
 
 Public Function lookupAllMatchingParams(value_or_label As String, _
                                         search_item As Object, _
-                                        param As Object) As Object()
+                                        param As Object, _
+                                        Optional contains As Boolean = False) _
+                As Object()
     Dim searches As Object()
     Dim results As Object()
-    Dim finds As Object()
+    Dim finds As Object() = {}
     Dim found_count As Integer = 0
+    Dim is_match As Boolean
+    Dim search As Object
+    Dim result As Object
+
     value_or_label = value_or_label.toLower()
     If param.IsMultiValue Then
         searches = IIf(value_or_label = "value", param.Value, param.Label)
         results = IIf(value_or_label = "value", param.Label, param.Value)
+        If contains AndAlso searches.Length > 0 AndAlso _
+                            Not TypeOf searches(0) Is String Then
+            contains = False
+        End If
         For i As Integer = 0 To param.Count -1
-            If searches(i) = search_item Then
+            If contains Then
+                is_match = searches(i).Contains(search_item)
+            Else
+                is_match = (searches(i) = search_item)
+            End If
+            If is_match Then
                 ReDim Preserve finds(found_count)
                 finds(found_count) = results(i)
                 found_count += 1
             End If
         Next i
-    ElseIf search_item = IIf(value_or_label = "value", param.Value, param.Label)
-        Redim Preserve finds(0)
-        finds(0) = IIf(value_or_label = "value", param.Label, param.Value)
+    Else
+        search = IIf(value_or_label = "value", param.Value, param.Label)
+        result = IIf(value_or_label = "value", param.Label, param.Value)
+        If contains AndAlso Not TypeOf search Is String Then
+            contains = False
+        End If
+        If contains Then
+            is_match = search.Contains(search_item)
+        Else
+            is_match = (search_item = search)
+        End If
+        If is_match
+            Redim Preserve finds(0)
+            finds(0) = result
+        End If
     End If
     Return finds
 End Function
