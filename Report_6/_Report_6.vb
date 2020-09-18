@@ -397,8 +397,9 @@ Public Function lookupAllMatchingParams(value_or_label As String, _
     If param.IsMultiValue Then
         searches = IIf(value_or_label = "value", param.Value, param.Label)
         results = IIf(value_or_label = "value", param.Label, param.Value)
-        If contains AndAlso searches.Length > 0 AndAlso _
-                            Not TypeOf searches(0) Is String Then
+        If contains AndAlso (Not TypeOf search_item Is String OrElse _
+                            searches.Length > 0 OrElse _
+                            Not TypeOf searches(0) Is String) Then
             contains = False
         End If
         For i As Integer = 0 To param.Count -1
