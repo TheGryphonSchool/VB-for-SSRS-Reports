@@ -1,5 +1,5 @@
 'File produced by combining files using the Combine Files VScode extension
-'C:\USERS\ZAC\PROJECTS\SSRS CODE\REPORT_6\GRADE_CHECKER.VB
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\GRADE_CHECKER.VB
 Public NotInheritable Class GradeChecker
     Private latest_group_id As Integer = 0
     Private latest_position As Integer = 0
@@ -36,7 +36,7 @@ Public Function highlightGrade(group_id As Integer, _
     Return bad
 End Function
 
-'C:\USERS\ZAC\PROJECTS\SSRS CODE\REPORT_6\MISCELLANEOUS.VB
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\MISCELLANEOUS.VB
 Public Function roundIfFloat(float As String) As String
     If float.Contains(".0") Then
         Return CStr(CInt(float))
@@ -86,7 +86,7 @@ Private Function cleanAndJoin(items As Object()) As String
     Return output.Substring(0, output_length - 2)
 End Function
 
-'C:\USERS\ZAC\PROJECTS\SSRS CODE\REPORT_6\RANK_CHECKER.VB
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\RANK_CHECKER.VB
 Public Class RankChecker
     Public badRanks As New System.Collections.Generic.List(Of Integer)
 
@@ -156,7 +156,7 @@ Public Function highlightRank(group_code As String, _
     Return IIf(RankCheckers.getInstance().isOk(group_code, rank), ok, bad)
 End Function
 
-'C:\USERS\ZAC\PROJECTS\SSRS CODE\UTILITIES\ARRAYS.VB
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\ARRAYS.VB
 Public Function removeDuplicates(items As Object()) As Object()
     'maps original indicies to new indicies
     Dim index_map As New _
@@ -200,7 +200,7 @@ Public Function averageArray(items As Object()) As Double
     Return sum / count
 End Function
 
-'C:\USERS\ZAC\PROJECTS\SSRS CODE\UTILITIES\COLOUR_SCALE.VB
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\COLOUR_SCALE.VB
 Public Class ColourScale
     Private scale As New System.Collections.Generic.List(Of Integer())
 
@@ -262,7 +262,7 @@ Public Function colourFromScale(fraction As Double, _
     Return header_colour_scale.getColour(fraction)
 End Function
 
-'C:\USERS\ZAC\PROJECTS\SSRS CODE\UTILITIES\LOOKUP_PARAMS.VB
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\LOOKUP_PARAMS.VB
 Public NotInheritable Class ParamLookups
     Private Shared singleton_instance As ParamLookups
     Private caches As New _
@@ -372,14 +372,6 @@ Public Function lookupNthParam(value_or_label As String, _
     Return Nothing 'if parameter doesn't have that number of items
 End Function
 
-Public Function isInParam(value_or_label As String, _
-                           search_item As Object, _
-                           param As Object) As Boolean
-    Dim lookups As Object() = _
-        IIf(value_or_label.toLower() = "value", param.Value, param.Label)
-    Return Array.IndexOf(lookups, search_item) >= 0
-End Function
-
 Public Function lookupAllMatchingParams(value_or_label As String, _
                                         search_item As Object, _
                                         param As Object, _
@@ -431,4 +423,77 @@ Public Function lookupAllMatchingParams(value_or_label As String, _
         End If
     End If
     Return finds
+End Function
+
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\SEARCH_PARAMS.VB
+Public Function CountMatchingParams(value_or_label As String, _
+                                    search_item As Object, _
+                                    param As Object,
+                                    Optional match_strategy As Integer = 0) _
+                As Integer
+    Dim searches As Object()
+    Dim found_count As Integer = 0
+    Dim search As Object
+
+    If match_strategy < 2 And Not TypeOf search_item Is String Then
+        Throw New ArgumentException(
+            "The search item must be a string to use the match strategies " & _
+            "'Contains' or 'Begins-with'. Pass 2 as the fourth parameter " & _
+            "to use exact matching")
+    End If
+    value_or_label = value_or_label.toLower()
+    If param.IsMultiValue Then
+        If value_or_label = "value" Then
+            searches = param.Value
+        Else
+            searches = param.Label
+        End If
+        If searches.Length < 1 Then
+            Throw New ArgumentException("The parameter you passed is empty!")
+        ElseIf match_strategy < 2 And Not TypeOf searches(0) Is String Then
+            Throw New ArgumentException(
+                "The parameter must have string values to use the " & _
+                "match strategies, 'Contains' or 'Begins-with'. Pass " & _
+                "2 as the fourth parameter to use exact matching")
+        End If
+        For i As Integer = 0 To param.Count -1
+            If matches(searches(i), search_item, match_strategy) Then
+                found_count += 1
+            End If
+        Next i
+    Else
+        If value_or_label = "value" Then
+            search = param.Value
+        Else
+            search = param.Label
+        End If
+        If Not TypeOf search Is String Then
+            Throw New ArgumentException("The parameter must be a string")
+        End If
+        found_count = IIf(search.Contains(search_item), 1, 0)
+    End If
+    Return found_count
+End Function
+
+Private Function matches(candidate As Object, _
+                         criterion As Object, _
+                         strategy As Integer) _
+                 As Boolean
+    Select Case strategy
+        Case 0
+            Return candidate.Contains(criterion)
+        Case 1
+            Return Left(candidate, criterion.Length) = criterion
+        Case Else
+            Return candidate = criterion
+    End Select
+End Function
+
+
+Public Function isInParam(value_or_label As String, _
+                          search_item As Object, _
+                          param As Object) As Boolean
+    Dim lookups As Object() = _
+        IIf(value_or_label.toLower() = "value", param.Value, param.Label)
+    Return Array.IndexOf(lookups, search_item) >= 0
 End Function

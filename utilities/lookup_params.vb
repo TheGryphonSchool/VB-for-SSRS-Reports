@@ -107,14 +107,6 @@ Public Function lookupNthParam(value_or_label As String, _
     Return Nothing 'if parameter doesn't have that number of items
 End Function
 
-Public Function isInParam(value_or_label As String, _
-                           search_item As Object, _
-                           param As Object) As Boolean
-    Dim lookups As Object() = _
-        IIf(value_or_label.toLower() = "value", param.Value, param.Label)
-    Return Array.IndexOf(lookups, search_item) >= 0
-End Function
-
 Public Function lookupAllMatchingParams(value_or_label As String, _
                                         search_item As Object, _
                                         param As Object, _

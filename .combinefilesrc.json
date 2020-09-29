@@ -5,7 +5,9 @@
             "outputFileName": "Mark_12/_Mark_12.vb",
             "fileGlobs": [
                 "Mark_12/[!_]*.vb",
-                "utilities/lookup_params.vb"
+                "utilities/colour_scale.vb",
+                "utilities/lookup_params.vb",
+                "utilities/search_params.vb"
             ],
             "fileHeader": [
                 "'File produced by combining files using the Combine Files VScode extension"
@@ -22,7 +24,8 @@
                 "Report_6/[!_]*.vb",
                 "utilities/arrays.vb",
                 "utilities/colour_scale.vb",
-                "utilities/lookup_params.vb"
+                "utilities/lookup_params.vb",
+                "utilities/search_params.vb"
             ],
             "fileHeader": [
                 "'File produced by combining files using the Combine Files VScode extension"

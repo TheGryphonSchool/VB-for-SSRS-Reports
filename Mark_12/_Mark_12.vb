@@ -1,5 +1,69 @@
 'File produced by combining files using the Combine Files VScode extension
-'C:\USERS\ZAC\PROJECTS\SSRS CODE\UTILITIES\LOOKUP_PARAMS.VB
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\MARK_12\MISCELLANEOUS.VB
+
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\COLOUR_SCALE.VB
+Public Class ColourScale
+    Private scale As New System.Collections.Generic.List(Of Integer())
+
+    Public Sub New(first As String, _
+                   second As String, _
+                   Optional third As String = "", _
+                   Optional fourth As String = "", _
+                   Optional fifth As String = "")
+        For Each nth As String In New String(4) {first, second, third, fourth, fifth}  
+            If nth Is "" Then
+                Exit For
+            End If
+            addToScale(nth)
+        Next nth
+    End Sub
+
+    Public Function getColour(fraction As Double)
+        Dim last_index As Integer = scale.Count - 1
+        Dim start As Integer
+        If fraction = 1.0 Then
+            Return scale(last_index)
+        End If
+        start = CInt(Math.Floor(fraction * last_index))
+        Return mixTwoColours(fraction * last_index - start, start)
+    End Function
+
+    Private Sub addToScale(hexColour As String)
+        Dim rgb(2) As Integer
+        hexColour = hexColour.Replace("#", "")
+        For i As Integer = 0 To 2
+            rgb(i) = Convert.ToInt32(hexColour.Substring(i * 2, 2), 16)
+        Next i
+        scale.Add(rgb)
+    End Sub
+
+    Private Function mixTwoColours(fraction As Double, _
+                                   start_index As Integer) As String
+        Dim starts As Integer
+        Dim ends As Integer
+        mixTwoColours = "#"
+        For i As Integer = 0 To 2
+            starts = scale.Item(start_index)(i)
+            ends = scale.Item(start_index + 1)(i)
+            mixTwoColours += _
+                Hex(CInt(starts + fraction * (ends - starts))).PadLeft(2,  "0")
+        Next i
+    End Function
+End Class
+
+Dim header_colour_scale As ColourScale
+
+Public Function colourFromScale(fraction As Double, _
+                                first As String, _
+                                second As String, _
+                                third As String) As String
+    If header_colour_scale Is Nothing Then
+        header_colour_scale = New ColourScale(first, second, third)
+    End If
+    Return header_colour_scale.getColour(fraction)
+End Function
+
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\LOOKUP_PARAMS.VB
 Public NotInheritable Class ParamLookups
     Private Shared singleton_instance As ParamLookups
     Private caches As New _
@@ -109,14 +173,6 @@ Public Function lookupNthParam(value_or_label As String, _
     Return Nothing 'if parameter doesn't have that number of items
 End Function
 
-Public Function isInParam(value_or_label As String, _
-                           search_item As Object, _
-                           param As Object) As Boolean
-    Dim lookups As Object() = _
-        IIf(value_or_label.toLower() = "value", param.Value, param.Label)
-    Return Array.IndexOf(lookups, search_item) >= 0
-End Function
-
 Public Function lookupAllMatchingParams(value_or_label As String, _
                                         search_item As Object, _
                                         param As Object, _
@@ -134,8 +190,9 @@ Public Function lookupAllMatchingParams(value_or_label As String, _
     If param.IsMultiValue Then
         searches = IIf(value_or_label = "value", param.Value, param.Label)
         results = IIf(value_or_label = "value", param.Label, param.Value)
-        If contains AndAlso searches.Length > 0 AndAlso _
-                            Not TypeOf searches(0) Is String Then
+        If contains AndAlso (Not TypeOf search_item Is String OrElse _
+                            searches.Length > 0 OrElse _
+                            Not TypeOf searches(0) Is String) Then
             contains = False
         End If
         For i As Integer = 0 To param.Count -1
@@ -167,4 +224,77 @@ Public Function lookupAllMatchingParams(value_or_label As String, _
         End If
     End If
     Return finds
+End Function
+
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\SEARCH_PARAMS.VB
+Public Function CountMatchingParams(value_or_label As String, _
+                                    search_item As Object, _
+                                    param As Object,
+                                    Optional match_strategy As Integer = 0) _
+                As Integer
+    Dim searches As Object()
+    Dim found_count As Integer = 0
+    Dim search As Object
+
+    If match_strategy < 2 And Not TypeOf search_item Is String Then
+        Throw New ArgumentException(
+            "The search item must be a string to use the match strategies " & _
+            "'Contains' or 'Begins-with'. Pass 2 as the fourth parameter " & _
+            "to use exact matching")
+    End If
+    value_or_label = value_or_label.toLower()
+    If param.IsMultiValue Then
+        If value_or_label = "value" Then
+            searches = param.Value
+        Else
+            searches = param.Label
+        End If
+        If searches.Length < 1 Then
+            Throw New ArgumentException("The parameter you passed is empty!")
+        ElseIf match_strategy < 2 And Not TypeOf searches(0) Is String Then
+            Throw New ArgumentException(
+                "The parameter must have string values to use the " & _
+                "match strategies, 'Contains' or 'Begins-with'. Pass " & _
+                "2 as the fourth parameter to use exact matching")
+        End If
+        For i As Integer = 0 To param.Count -1
+            If matches(searches(i), search_item, match_strategy) Then
+                found_count += 1
+            End If
+        Next i
+    Else
+        If value_or_label = "value" Then
+            search = param.Value
+        Else
+            search = param.Label
+        End If
+        If Not TypeOf search Is String Then
+            Throw New ArgumentException("The parameter must be a string")
+        End If
+        found_count = IIf(search.Contains(search_item), 1, 0)
+    End If
+    Return found_count
+End Function
+
+Private Function matches(candidate As Object, _
+                         criterion As Object, _
+                         strategy As Integer) _
+                 As Boolean
+    Select Case strategy
+        Case 0
+            Return candidate.Contains(criterion)
+        Case 1
+            Return Left(candidate, criterion.Length) = criterion
+        Case Else
+            Return candidate = criterion
+    End Select
+End Function
+
+
+Public Function isInParam(value_or_label As String, _
+                          search_item As Object, _
+                          param As Object) As Boolean
+    Dim lookups As Object() = _
+        IIf(value_or_label.toLower() = "value", param.Value, param.Label)
+    Return Array.IndexOf(lookups, search_item) >= 0
 End Function
