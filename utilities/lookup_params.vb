@@ -77,9 +77,9 @@ Private Function _lookupParam(value_or_label As String, _
         searches = IIf(value_or_label = "value", param.Value, param.Label)
         results = IIf(value_or_label = "value", param.Label, param.Value)
         For i As Integer = 0 To param.Count -1
-            If searches(i) = search_item Then
+            If search_item.Equals(searches(i)) Then
                 found_count += 1
-                If found_count = nth_match Then
+                If found_count.Equals(nth_match) Then
                     _lookupParam = results(i)
                     If caching Then
                         ParamLookups.getInstance().cacheResult(param, _
@@ -133,7 +133,7 @@ Public Function lookupAllMatchingParams(value_or_label As String, _
             If contains Then
                 is_match = searches(i).Contains(search_item)
             Else
-                is_match = (searches(i) = search_item)
+                is_match = search_item.Equals(searches(i))
             End If
             If is_match Then
                 ReDim Preserve finds(found_count)
@@ -150,7 +150,7 @@ Public Function lookupAllMatchingParams(value_or_label As String, _
         If contains Then
             is_match = search.Contains(search_item)
         Else
-            is_match = (search_item = search)
+            is_match = search_item.Equals(search)
         End If
         If is_match
             Redim Preserve finds(0)

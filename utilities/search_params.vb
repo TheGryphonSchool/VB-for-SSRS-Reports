@@ -57,7 +57,7 @@ Private Function matches(candidate As Object, _
         Case 1
             Return Left(candidate, criterion.Length) = criterion
         Case Else
-            Return candidate = criterion
+            Return criterion.Equals(candidate)
     End Select
 End Function
 
