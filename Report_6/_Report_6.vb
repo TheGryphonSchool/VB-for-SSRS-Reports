@@ -491,7 +491,15 @@ End Function
 Private Function StartsWithRegex(start As String) As _
                                  System.Text.RegularExpressions.Regex
     Return New _
-    System.Text.RegularExpressions.Regex("^" & start)
+    System.Text.RegularExpressions.Regex("^" & EscapeRegexString(start))
+End Function
+
+Private Function EscapeRegexString(unescaped As String) As String
+    ' Escape regex meta-characters in user-supplied string so that a regex can
+    ' be built from the string that matches the supplied characters literally
+    Dim esc_rgx As System.Text.RegularExpressions.Regex
+    esc_rgx = New System.Text.RegularExpressions.Regex("[|^$.()?+*\[\]\\]")
+    Return esc_rgx.Replace(unescaped, "\$&")
 End Function
 
 Private Sub ThrowIfSearchAndStrategyMismatched(search_item As Object, _
