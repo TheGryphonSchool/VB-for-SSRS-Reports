@@ -342,9 +342,9 @@ Private Function _lookupParam(value_or_label As String, _
         searches = IIf(value_or_label = "value", param.Value, param.Label)
         results = IIf(value_or_label = "value", param.Label, param.Value)
         For i As Integer = 0 To param.Count -1
-            If searches(i) = search_item Then
+            If search_item.Equals(searches(i)) Then
                 found_count += 1
-                If found_count = nth_match Then
+                If found_count.Equals(nth_match) Then
                     _lookupParam = results(i)
                     If caching Then
                         ParamLookups.getInstance().cacheResult(param, _
@@ -398,7 +398,7 @@ Public Function lookupAllMatchingParams(value_or_label As String, _
             If contains Then
                 is_match = searches(i).Contains(search_item)
             Else
-                is_match = (searches(i) = search_item)
+                is_match = search_item.Equals(searches(i))
             End If
             If is_match Then
                 ReDim Preserve finds(found_count)
@@ -415,7 +415,7 @@ Public Function lookupAllMatchingParams(value_or_label As String, _
         If contains Then
             is_match = search.Contains(search_item)
         Else
-            is_match = (search_item = search)
+            is_match = search_item.Equals(search)
         End If
         If is_match
             Redim Preserve finds(0)
@@ -433,62 +433,88 @@ Public Function CountMatchingParams(value_or_label As String, _
                 As Integer
     Dim searches As Object()
     Dim found_count As Integer = 0
-    Dim search As Object
+    Dim starts_with_regex As System.Text.RegularExpressions.Regex
 
-    If match_strategy < 2 And Not TypeOf search_item Is String Then
-        Throw New ArgumentException(
-            "The search item must be a string to use the match strategies " & _
-            "'Contains' or 'Begins-with'. Pass 2 as the fourth parameter " & _
-            "to use exact matching")
-    End If
+    ThrowIfSearchAndStrategyMismatched(search_item, match_strategy)
     value_or_label = value_or_label.toLower()
-    If param.IsMultiValue Then
-        If value_or_label = "value" Then
-            searches = param.Value
-        Else
-            searches = param.Label
-        End If
-        If searches.Length < 1 Then
-            Throw New ArgumentException("The parameter you passed is empty!")
-        ElseIf match_strategy < 2 And Not TypeOf searches(0) Is String Then
-            Throw New ArgumentException(
-                "The parameter must have string values to use the " & _
-                "match strategies, 'Contains' or 'Begins-with'. Pass " & _
-                "2 as the fourth parameter to use exact matching")
-        End If
-        For i As Integer = 0 To param.Count -1
-            If matches(searches(i), search_item, match_strategy) Then
-                found_count += 1
-            End If
-        Next i
-    Else
-        If value_or_label = "value" Then
-            search = param.Value
-        Else
-            search = param.Label
-        End If
-        If Not TypeOf search Is String Then
-            Throw New ArgumentException("The parameter must be a string")
-        End If
-        found_count = IIf(search.Contains(search_item), 1, 0)
+    If Not param.IsMultiValue Then
+        Return CountInSingleValueParam(value_or_label, search_item, _
+                                       param, match_strategy)
     End If
+    searches = IIf(value_or_label = "value", param.Value, param.Label)
+    ThrowUnlessSearchesAreSearchable(searches, match_strategy)
+    Select Case match_strategy
+        Case 0
+            For i As Integer = 0 To param.Count -1
+                If searches(i).Contains(search_item) Then
+                    found_count += 1
+                End If
+            Next i
+        Case 1
+            starts_with_regex = StartsWithRegex(search_item)
+            For i As Integer = 0 To param.Count -1
+                If starts_with_regex.IsMatch(searches(i)) Then
+                    found_count += 1
+                End If
+            Next i
+        Case Else
+            For i As Integer = 0 To param.Count -1
+                If search_item.Equals(searches(i)) Then
+                    found_count += 1
+                End If
+            Next i
+    End Select
     Return found_count
 End Function
 
-Private Function matches(candidate As Object, _
-                         criterion As Object, _
-                         strategy As Integer) _
-                 As Boolean
-    Select Case strategy
+Private Function CountInSingleValueParam(value_or_label As String, _
+                                         search_item As String, _
+                                         param As Object, _
+                                         match_strategy As Integer) _
+                                         As Integer
+    Dim search As Object
+
+    search = IIf(value_or_label = "value", param.Value, param.Label)
+    If Not TypeOf search Is String Then
+        Throw New ArgumentException("The parameter must be a string")
+    End If
+    Select Case match_strategy
         Case 0
-            Return candidate.Contains(criterion)
+            Return IIf(search.Contains(search_item), 1, 0)
         Case 1
-            Return Left(candidate, criterion.Length) = criterion
+            Return IIF(StartsWithRegex(search_item).IsMatch(search), 1, 0)
         Case Else
-            Return candidate = criterion
+            Return IIf(search_item.Equals(search), 1, 0)
     End Select
 End Function
 
+Private Function StartsWithRegex(start As String) As _
+                                 System.Text.RegularExpressions.Regex
+    Return New _
+    System.Text.RegularExpressions.Regex("^" & start)
+End Function
+
+Private Sub ThrowIfSearchAndStrategyMismatched(search_item As Object, _
+                                               strategy As Integer)
+    If strategy < 2 And Not TypeOf search_item Is String Then
+        Throw New ArgumentException(
+            "The search item must be a string to use the match strategies " & _
+            "'Contains' (0) or 'Begins-with' (1). Pass 2 as the fourth" & _
+            "parameter to use exact matching")
+    End If
+End Sub
+
+Private Sub ThrowUnlessSearchesAreSearchable(searches As Object(), _
+                                             strategy As Integer)
+    If searches.Length < 1 Then
+        Throw New ArgumentException("The parameter you passed is empty!")
+    ElseIf strategy < 2 And Not TypeOf searches(0) Is String Then
+        Throw New ArgumentException(
+            "The parameter must have string values to use the " & _
+            "match strategies, 'Contains' or 'Begins-with'. Pass " & _
+            "2 as the fourth parameter to use exact matching")
+    End If
+End Sub
 
 Public Function isInParam(value_or_label As String, _
                           search_item As Object, _
