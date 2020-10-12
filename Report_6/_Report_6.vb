@@ -1,54 +1,10 @@
 'File produced by combining files using the Combine Files VScode extension
-'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\GRADE_CHECKER.VB
-Public NotInheritable Class GradeChecker
-    Private latest_group_id As Integer = 0
-    Private latest_position As Integer = 0
-    Private Shared singleton_grade_checker As GradeChecker
-
-    Public Shared Function getInstance() As GradeChecker
-        If (singleton_grade_checker Is Nothing) Then
-            singleton_grade_checker = New GradeChecker()
-        End If
-        Return singleton_grade_checker
-    End Function
-
-    Public Function isOk(group_id As Integer, position As Object) As Boolean
-        If group_id <> latest_group_id Then
-            'First grade in group (i.e. top rank)
-            latest_group_id = group_id
-        ElseIf position < latest_position Then
-            Return False
-        End If
-        latest_position = position
-        Return True
-    End Function
-End Class
-
-Public Function highlightGrade(group_id As Integer, _
-                               position As Object, _
-                               bad As String, _
-                               ok As String) As String
-    If IsNothing(position) OrElse _
-        GradeChecker.getInstance().isOk(group_id, CInt(position)) Then
-        'If position is nothing, these aren't grades, so don't highlight them
-        Return ok
-    End If
-    Return bad
-End Function
-
-'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\MISCELLANEOUS.VB
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\FUNCTIONS.VB
 Public Function roundIfFloat(float As String) As String
     If float.Contains(".0") Then
         Return CStr(CInt(float))
     End If
     Return float
-End Function
-
-Public Function averageIfNumeric(ranks As String) As Integer
-    If ranks is Nothing Then
-        Return 0
-    End If
-    Return averageArray(ranks.Split(", "))
 End Function
 
 Public Function lookupCleanedJoinedGrades(value_or_label As String, _
@@ -86,75 +42,299 @@ Private Function cleanAndJoin(items As Object()) As String
     Return output.Substring(0, output_length - 2)
 End Function
 
-'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\RANK_CHECKER.VB
-Public Class RankChecker
-    Public badRanks As New System.Collections.Generic.List(Of Integer)
+Public Function storeAndRankGroupLearner(groupID As Integer, _
+                                         learnerID As Integer, _
+                                         gradePointOnScale As Integer, _
+                                         ranks As String) As Double
+    Return _
+        RankChecker.getInstance().storeAndRankGroupLearner(groupID, _
+                                                           learnerID, _
+                                                           gradePointOnScale, _
+                                                           ranks)
+End Function
 
-    Public Sub addBad(badRank As Integer)
-        badRanks.Add(badRank)
-    End Sub
+Public Function getGroupLearnerProblems(groupID As Integer, _
+                                        learnerID As Integer) As Integer
+    Return _
+        RankChecker.getInstance().getGroupLearnerProblems(groupID, learnerID)
+End Function
 
-    Public Function isOk(rank As Integer) As Boolean
-        Return Not badRanks.Contains(rank)
+Public Function getGroupLearnerRankDelta(groupID As Integer, _
+                                         learnerID As Integer) As Double
+    Return _
+        RankChecker.getInstance().getGroupLearnerRankDelta(groupID, learnerID)
+End Function
+
+
+' Public Function highlightRank(group_code As String, _
+'                               rank As String, _
+'                               empty As String, _
+'                               bad As String, _
+'                               ok As String, _
+'                               differing As String) As String
+'     'rank will be a string unless it's nothing
+'     If IsNothing(rank) Then
+'         Return empty
+'     ElseIf rank.Contains(",") Then
+'         'Two teachers have entered different grades
+'         Return differing
+'     End If
+'     Return IIf(RankChecker.getInstance().isOk(group_code, rank), ok, bad)
+' End Function
+
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\GRADE_CHECKER.VB
+Public NotInheritable Class GradeChecker
+    Private latest_group_id As Integer = 0
+    Private latest_position As Integer = 0
+    Private Shared singleton_grade_checker As GradeChecker
+
+    Public Shared Function getInstance() As GradeChecker
+        If (singleton_grade_checker Is Nothing) Then
+            singleton_grade_checker = New GradeChecker()
+        End If
+        Return singleton_grade_checker
+    End Function
+
+    Public Function isOk(group_id As Integer, position As Object) As Boolean
+        If group_id <> latest_group_id Then
+            'First grade in group (i.e. top rank)
+            latest_group_id = group_id
+        ElseIf position < latest_position Then
+            Return False
+        End If
+        latest_position = position
+        Return True
     End Function
 End Class
 
-Public NotInheritable Class RankCheckers
-    Private Shared singleton_rank_checker As RankCheckers
-    Private rank_checkers_dict As New _
-        System.Collections.Generic.Dictionary(Of String, RankChecker)
+Public Function highlightGrade(group_id As Integer, _
+                               position As Object, _
+                               bad As String, _
+                               ok As String) As String
+    If IsNothing(position) OrElse _
+        GradeChecker.getInstance().isOk(group_id, CInt(position)) Then
+        'If position is nothing, these aren't grades, so don't highlight them
+        Return ok
+    End If
+    Return bad
+End Function
 
-    Public Shared Function getInstance() As RankCheckers
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\GROUP.VB
+Public Class Group
+    Private learnerList As New System.Collections.Generic.List(Of GroupLearner)
+    Private learnerDict As New _
+        System.Collections.Generic.Dictionary(Of Integer, GroupLearner)
+    Public sortedAndAnalysed As Boolean = False
+
+    Public Function storeAndRankLearner(learnerID As Integer, _
+                                        gradePointOnScale As Integer, _
+                                        ranks As String) As Double
+        Dim learner As New GroupLearner(gradePointOnScale, ranks)
+        learnerList.Add(learner)
+        learnerDict.Add(learnerID, learner)
+        Return learner.effectiveRank
+    End Function
+
+    Public Function getLearnerProblems(learnerID As Integer) As Integer
+        Dim learner As GroupLearner
+        sortAndAnalyse()
+        If Not learnerDict.TryGetValue(learnerID, learner) Then
+            return 0
+        End If
+        return learner.problemCode
+    End Function
+
+    Public Function getLearnerRankDelta(learnerID As Integer) As Integer
+        Dim learner As GroupLearner
+        sortAndAnalyse()
+        If Not learnerDict.TryGetValue(learnerID, learner) Then
+            return 0
+        End If
+        return learner.rankDelta
+    End Function
+
+    Private Sub sortAndAnalyse()
+        If sortedAndAnalysed Then
+            Return
+        End If
+        learnerList.Sort(AddressOf compareUsingRanks)
+        findSkippedRanks()
+        findAndStoreRankGradeIncompatibilities()
+        ' Find grade/rank invompatibilites & store in learners' rankDelta var
+        setRankDeltas(rankRangesForGrades(countEachGrade()))
+        sortedAndAnalysed = True
+    End Sub
+
+    Private Shared Function compareUsingRanks(learner1 As GroupLearner, _
+                                              learner2 As GroupLearner) _
+                                              As Integer
+        ' Pass method to List#sort() to sort learners by their ranks
+        ' Side-effect: If learners have the same rank, sets 2nd bit of problem
+        '   code to 1 for each learner
+        Dim comparison As Integer =
+            learner1.effectiveRank.compareTo(learner2.effectiveRank)
+        If comparison = 0 Then
+            learner1.problemCode = learner1.problemCode Or 2
+            learner2.problemCode = learner2.problemCode Or 2
+        End If
+        Return comparison
+    End Function
+
+    Private Sub findSkippedRanks()
+        ' Find learners with ranks more than 1 greater than the learner before
+        '   and set 3rd bit of their problem code to 1
+        Dim lastEffectiveRank As Double
+        For Each learner As GroupLearner In learnerList
+            If learner.effectiveRank - lasteffectiveRank > 1.0 Then
+                ' 1 or more ranks have been skipped
+                learner.problemCode = learner.problemCode Or 4
+            End If
+            lastEffectiveRank = learner.effectiveRank
+        Next learner
+    End Sub
+
+    Private Function countEachGrade() As new _
+            System.Collections.Generic.Dictionary(of Integer, Integer)
+        Dim currentGrade As Integer
+        For Each learner As GroupLearner In learnerList
+            currentGrade = learner.gradePoints
+            If countEachGrade.containsKey(currentGrade) Then
+                countEachGrade(currentGrade) += 1
+            Else
+                countEachGrade.Add(currentGrade, 1)
+            End If
+        Next learner
+    End Function
+    
+
+    Private Function rankRangesForGrades(gradeCounts As _
+            System.Collections.Generic.Dictionary(of Integer, Integer)) As new _
+            System.Collections.Generic.Dictionary(of Integer, Integer(1))
+        Dim highestRank As Integer = 0
+        Dim newHighestRank As Integer
+        For each grade As Integer in gradeCounts.Keys
+            newHighestRank = highestRank + gradeCounts(grade)
+            rankRangesForGrades.Add(grade, { highestRank + 1, newHighestRank })
+            highestRank = newHighestRank
+        Next grade
+    End Function
+    
+    Private Sub setRankDeltas(gradeRankRanges As _
+            System.Collections.Generic.Dictionary(of Integer, Integer(1)))
+        Dim rankRange(1) As Integer
+        Dim learnerRank As Double
+        For Each learner As GroupLearner In learnerList
+            rankRange = gradeRankRanges(learner.gradePoints)
+            learnerRank = learner.effectiveRank
+            If learnerRank < rankRange(0) Then
+                learner.rankDelta = rankRange(0) - learnerRank
+            Else If learnerRank > rankRange(1) Then
+                learner.rankDelta = rankRange(1) - learnerRank
+            Else
+                learner.rankDelta = 0
+            End If
+        Next learner
+    End Sub
+End Class
+
+
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\GROUPLEARNER.VB
+Public Class GroupLearner
+    Public gradePoints As Integer
+    Public effectiveRank As Double
+    Public problemCode As Integer
+    ' problem code is a pseudo-bitfield whose bits have these meanings:
+    '   1st bit => has multiple, conflicting ranks
+    '   2nd bit => has same ranks as another learner
+    '   3rd bit => has skipped a rank 
+    Public rankDelta As Double
+    ' The minimum magnitude (signed) change in rank needed for this learner to
+    '   have a rank appropriate for their grade. Note that this may place them
+    '   in the same rank as another learner
+ 
+    Sub new(gradePointOnScale As Integer, ranks As String)
+        problemCode = 0
+        gradePoints = gradePointOnScale
+        effectiveRank = averageIfNumeric(ranks)
+    End Sub
+
+    Private Sub setEffectiveRank(ranks As String)
+        ' Side effect: Sets 1st bit of problem code to 1 if ranks conflict
+        Dim sum as Double = 0
+        Dim count as Integer = 0
+        Dim prev As Double = 0
+        Dim conflict As Boolean = False
+        If ranks is Nothing Then
+           effectiveRank 0.0
+           Return
+        End If
+        For Each item As Object In averageArray(ranks.Split(", "))
+            Try
+                item = CDbl(item) 
+                Sum += item
+                count += 1
+                If prev AndAlso item <> prev Then
+                    conflict = True
+                End If
+                prev = item
+            Catch _ex As Exception
+                ' Ignore here
+            End Try
+        Next item
+        If conflict Then 
+            problemCode = problemCode Or 1
+        End If
+        If count = 0 Then
+            effectiveRank 0.0
+        Else If
+            effectiveRank sum / count
+        End If
+    End Function
+End Class
+
+'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\RANKCHECKER.VB
+Public NotInheritable Class RankChecker
+    Private Shared singleton_rank_checker As RankChecker
+    Private groups As New _
+        System.Collections.Generic.Dictionary(Of Integer, Group)
+
+    Public Shared Function getInstance() As RankChecker
         If (singleton_rank_checker Is Nothing) Then
-            singleton_rank_checker = New RankCheckers()
+            singleton_rank_checker = New RankChecker()
         End If
         Return singleton_rank_checker
     End Function
 
-    Public Function countOkRanks(group_code As String, _
-                                 ranks As Object()) As Integer
-        Dim rank_checker As RankChecker = New RankChecker
-        Dim prev_rank As Int64 = 0
-        countOkRanks = 0
-        Array.sort(ranks)
-        For Each rank As Object In ranks
-            If TypeOf rank Is Integer Then
-                If rank - prev_rank = 1 Then
-                    countOkRanks += 1
-                Else
-                    rank_checker.addBad(rank)
-                End If
-                prev_rank = rank
-            End If
-        Next rank
-        rank_checkers_dict.Add(group_code, rank_checker)
+    Public Function storeAndRankGroupLearner(groupID As Integer, _
+                                             learnerID As Integer, _
+                                             gradePointOnScale As Integer, _
+                                             ranks As String) As Double
+        Dim group As Group
+        If Not groups.TryGetValue(groupID, group) Then
+            group = new group
+            groups.Add(groupID, group)
+        End If
+        group.storeAndRankLearner(learnerID, gradePointOnScale, ranks)
     End Function
 
-    Public Function isOk(group_code As String, rank As String) As Boolean
-        Dim rank_checker As RankChecker = rank_checkers_dict(group_code)
-        Return rank_checker Is Nothing OrElse rank_checker.isOk(CInt(rank))
+    Public Function getGroupLearnerProblems(groupID As Integer, _
+                                            learnerID As Integer) As Integer
+        Dim group As Group
+        If Not groups.TryGetValue(groupID, group) Then
+            return 0
+        End If
+        group.getLearnerProblems(learnerID)
+    End Function
+
+    Public Function getGroupLearnerRankDelta(groupID As Integer, _
+                                             learnerID As Integer) As Double
+        Dim group As Group
+        If Not groups.TryGetValue(groupID, group) Then
+            return 0
+        End If
+        group.getLearnerRankDelta(learnerID)
     End Function
 End Class
-
-Public Function countOkRanks(group_code As String, ranks As Object()) As Integer
-    Return RankCheckers.getInstance().countOkRanks(group_code, ranks)
-End Function
-
-Public Function highlightRank(group_code As String, _
-                              rank As String, _
-                              empty As String, _
-                              bad As String, _
-                              ok As String, _
-                              differing As String) As String
-    'rank will be a string unless it's nothing
-    If IsNothing(rank) Then
-        Return empty
-    ElseIf rank.Contains(",") Then
-        'Two teachers have entered different grades
-        Return differing
-    End If
-    Return IIf(RankCheckers.getInstance().isOk(group_code, rank), ok, bad)
-End Function
 
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\ARRAYS.VB
 Public Function removeDuplicates(items As Object()) As Object()
@@ -178,26 +358,6 @@ Public Function removeDuplicates(items As Object()) As Object()
     Next old_index
     ReDim Preserve items(index - 1 - shift)
     Return items
-End Function
-
-Public Function averageArray(items As Object()) As Double
-	Dim sum as Double = 0
-	Dim count as Integer = 0
-	For Each item As Double In items
-		If Not IsNumeric(item) Then
-            Try
-                item = CDbl(item) 
-            Catch _ex As Exception
-                item = 0
-            End Try
-        End If
-        sum += item
-		count += 1
-	Next item
-	If count = 0 Then
-        Return 0
-    End If
-    Return sum / count
 End Function
 
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\COLOUR_SCALE.VB

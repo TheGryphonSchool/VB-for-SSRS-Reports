@@ -20,23 +20,3 @@ Public Function removeDuplicates(items As Object()) As Object()
     ReDim Preserve items(index - 1 - shift)
     Return items
 End Function
-
-Public Function averageArray(items As Object()) As Double
-	Dim sum as Double = 0
-	Dim count as Integer = 0
-	For Each item As Double In items
-		If Not IsNumeric(item) Then
-            Try
-                item = CDbl(item) 
-            Catch _ex As Exception
-                item = 0
-            End Try
-        End If
-        sum += item
-		count += 1
-	Next item
-	If count = 0 Then
-        Return 0
-    End If
-    Return sum / count
-End Function
