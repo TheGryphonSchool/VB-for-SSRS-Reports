@@ -6,6 +6,7 @@
             "fileGlobs": [
                 "Mark_12/[!_]*.vb",
                 "utilities/colour_scale.vb",
+                "utilities/arrays.vb",
                 "utilities/lookup_params.vb",
                 "utilities/search_params.vb"
             ],
