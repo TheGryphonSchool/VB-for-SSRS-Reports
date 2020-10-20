@@ -4,7 +4,7 @@ Public NotInheritable Class ParamLookups
         System.Collections.Generic.Dictionary(Of Object, Object)
         'SSRS_parameter => Dict(search_item => result)
     
-    Public Shared Function getInstance() As ParamLookups
+    Public Shared Function GetInstance() As ParamLookups
         If (singleton_instance Is Nothing) Then
             singleton_instance = New ParamLookups()
         End If
@@ -35,24 +35,24 @@ End Class
 
 ' Return the first param that matches the search_item
 Overloads Public Function lookupParam(value_or_label As String, _
-                            search_item As Object, _
-                            param As Object) As Object
+                                      search_item As Object, _
+                                      param As Object) As Object
     Return _lookupParam(value_or_label, search_item, param)
 End Function
 
 ' Return the nth param that matches the search_item
 Overloads Public Function lookupParam(value_or_label As String, _
-                            search_item As Object, _
-                            param As Object, _
-                            nth_match As Integer) As Object
+                                      search_item As Object, _
+                                      param As Object, _
+                                      nth_match As Integer) As Object
     Return _lookupParam(value_or_label, search_item, param, nth_match)
 End Function
 
 ' Basic, with caching
 Overloads Public Function lookupParam(value_or_label As String, _
-                            search_item As Object, _
-                            param As Object, _
-                            caching As Boolean) As Object
+                                      search_item As Object, _
+                                      param As Object, _
+                                      caching As Boolean) As Object
     Return _lookupParam(value_or_label, search_item, param, 1, caching)
 End Function
 
@@ -68,7 +68,7 @@ Private Function _lookupParam(value_or_label As String, _
     If param.IsMultiValue Then
         If caching Then
             _lookupParam = _
-                ParamLookups.getInstance().searchCaches(param, search_item)
+                ParamLookups.GetInstance().searchCaches(param, search_item)
             If _lookupParam IsNot Nothing Then
                 Exit Function
             End If
@@ -82,7 +82,7 @@ Private Function _lookupParam(value_or_label As String, _
                 If found_count.Equals(nth_match) Then
                     _lookupParam = results(i)
                     If caching Then
-                        ParamLookups.getInstance().cacheResult(param, _
+                        ParamLookups.GetInstance().cacheResult(param, _
                                                                search_item, _
                                                                _lookupParam)
                     End If
