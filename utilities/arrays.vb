@@ -20,3 +20,13 @@ Public Function removeDuplicates(items As Object()) As Object()
     ReDim Preserve items(index - 1 - shift)
     Return items
 End Function
+
+Public Function SumArray(nums() As Object) As Integer
+    Dim num As Integer
+	SumArray = 0
+	For Each o As Object In nums
+        If Integer.TryParse(o, num)
+            SumArray += num
+        End If
+	Next o
+End Function
