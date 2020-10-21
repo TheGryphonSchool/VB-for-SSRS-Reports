@@ -22,7 +22,7 @@ Public Class ColourScale
         Dim last_index As Integer = scale.Count - 1
         Dim start As Integer
         If fraction = 1.0 Then
-            Return scale(last_index)
+            Return mixTwoColours(1.0, last_index - 1)
         End If
         start = CInt(Math.Floor(fraction * last_index))
         Return mixTwoColours(fraction * last_index - start, start)
