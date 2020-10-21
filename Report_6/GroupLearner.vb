@@ -1,52 +1,55 @@
 Public Class GroupLearner
-    Public gradePoints As Integer
-    Public effectiveRank As Double
+    Public grades As New Grades
+    Public ranks As New Ranks
     Public problemCode As Integer
     ' problem code is a pseudo-bitfield whose bits have these meanings:
     '   1st bit => has multiple, conflicting ranks
-    '   2nd bit => has same ranks as another learner
-    '   3rd bit => has skipped a rank 
+    '   2nd bit => has same rank as another learner
+    '   3rd bit => has skipped a rank
     Public rankDelta As Double
     ' The minimum magnitude (signed) change in rank needed for this learner to
     '   have a rank appropriate for their grade. Note that this may place them
     '   in the same rank as another learner
- 
-    Sub new(gradePointOnScale As Integer, ranks As String)
-        problemCode = 0
-        gradePoints = gradePointOnScale
-        effectiveRank = averageIfNumeric(ranks)
+    Private otherMarks As New OtherMarks()
+
+    Public Sub AddRank(newRank As Double)
+        ranks.Add(newRank)
     End Sub
 
-    Private Sub setEffectiveRank(ranks As String)
-        ' Side effect: Sets 1st bit of problem code to 1 if ranks conflict
-        Dim sum as Double = 0
-        Dim count as Integer = 0
-        Dim prev As Double = 0
-        Dim conflict As Boolean = False
-        If ranks is Nothing Then
-           effectiveRank 0.0
-           Return
-        End If
-        For Each item As Object In averageArray(ranks.Split(", "))
-            Try
-                item = CDbl(item) 
-                Sum += item
-                count += 1
-                If prev AndAlso item <> prev Then
-                    conflict = True
-                End If
-                prev = item
-            Catch _ex As Exception
-                ' Ignore here
-            End Try
-        Next item
-        If conflict Then 
+    Public Sub AddGrade(newGradeLetter As String, newGradePoints As Double)
+        grades.Add(newGradeLetter, newGradePoints)
+    End Sub
+
+    Public Sub AddOtherMark(colName As String, mark As String)
+        otherMarks.AddMark(colName, mark)
+    End Sub
+
+    Public Function GetAllRanks() As String
+        Return ranks.GetAllRanks()
+    End Function
+
+    Public Function GetEffectiveRank()
+        ' Sets 1st bit of problem code to 1 if ranks conflict
+        GetEffectiveRank = ranks.GetEffectiveRank()
+        If ranks.conflict Then
             problemCode = problemCode Or 1
         End If
-        If count = 0 Then
-            effectiveRank 0.0
-        Else If
-            effectiveRank sum / count
-        End If
+    End Function
+
+    Public Function GetAllGrades() As String
+        Return grades.GetAllMarks()
+    End Function
+
+    Public Function GetEffectiveGradePoints() As Double
+        Return grades.GetEffectiveGradePoints()
+    End Function
+
+    Public Function GetOtherMarks(colName As String) As String
+        Return otherMarks.GetMarks(colName)
+    End Function
+
+    Public Function ShowMarks() As String
+        ShowMarks = "    Ranks: " & ranks.GetAllRanks() & vbCrLf & _
+                  "    Grades: " & grades.GetAllMarks()
     End Function
 End Class
