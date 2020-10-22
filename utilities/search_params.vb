@@ -1,105 +1,77 @@
-Public Function CountMatchingParams(value_or_label As String, _
-                                    search_item As Object, _
-                                    param As Object,
-                                    Optional match_strategy As Integer = 0) _
-                As Integer
-    Dim searches As Object()
-    Dim found_count As Integer = 0
-    Dim starts_with_regex As System.Text.RegularExpressions.Regex
+    ' Dependent on utilities/param_helpers.vb
+    ' It must be combined if this file is
+    Public Function CountMatchingParams(valueOrLabel As String, _
+                                        searchItem As Object, _
+                                        param As Object) As Integer
+        Return CountMatchingParams(valueOrLabel, searchItem, param, "E")
+    End Function
 
-    ThrowIfSearchAndStrategyMismatched(search_item, match_strategy)
-    value_or_label = value_or_label.toLower()
-    If Not param.IsMultiValue Then
-        Return CountInSingleValueParam(value_or_label, search_item, _
-                                       param, match_strategy)
-    End If
-    searches = IIf(value_or_label = "value", param.Value, param.Label)
-    ThrowUnlessSearchesAreSearchable(searches, match_strategy)
-    Select Case match_strategy
-        Case 0
-            For i As Integer = 0 To param.Count -1
-                If searches(i).Contains(search_item) Then
-                    found_count += 1
-                End If
-            Next i
-        Case 1
-            starts_with_regex = StartsWithRegex(search_item)
-            For i As Integer = 0 To param.Count -1
-                If starts_with_regex.IsMatch(searches(i)) Then
-                    found_count += 1
-                End If
-            Next i
-        Case Else
-            For i As Integer = 0 To param.Count -1
-                If search_item.Equals(searches(i)) Then
-                    found_count += 1
-                End If
-            Next i
-    End Select
-    Return found_count
-End Function
+    Public Function CountMatchingParams(valueOrLabel As String, _
+                                        searchItem As Object, _
+                                        param As Object, _
+                                        matchStrategy As Char) As Integer
+        Dim searches As Object()
+        Dim foundCount As Integer = 0
+        Dim regexForStartsWith As System.Text.RegularExpressions.Regex
 
-Private Function CountInSingleValueParam(value_or_label As String, _
-                                         search_item As String, _
-                                         param As Object, _
-                                         match_strategy As Integer) _
-                                         As Integer
-    Dim search As Object
+        valueOrLabel = valueOrLabel.ToLower()
+        If Not param.IsMultiValue Then
+            Return CountInSingleValueParam(valueOrLabel, searchItem, _
+                                       param, matchStrategy)
+        End If
+        searches = IIf(valueOrLabel = "value", param.Value, param.Label)
+        Select Case matchStrategy
+            Case "C" ' Contains
+                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+                For i As Integer = 0 To param.Count - 1
+                    If searches(i).Contains(searchItem) Then
+                        foundCount += 1
+                    End If
+                Next i
+            Case "S" ' Starts-with
+                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+                regexForStartsWith = StartsWithRegex(searchItem)
+                For i As Integer = 0 To param.Count - 1
+                    If regexForStartsWith.IsMatch(searches(i)) Then
+                        foundCount += 1
+                    End If
+                Next i
+            Case Else ' Equals
+                For i As Integer = 0 To param.Count - 1
+                    If searchItem.Equals(searches(i)) Then
+                        foundCount += 1
+                    End If
+                Next i
+        End Select
+        Return foundCount
+    End Function
 
-    search = IIf(value_or_label = "value", param.Value, param.Label)
-    If Not TypeOf search Is String Then
-        Throw New ArgumentException("The parameter must be a string")
-    End If
-    Select Case match_strategy
-        Case 0
-            Return IIf(search.Contains(search_item), 1, 0)
-        Case 1
-            Return IIF(StartsWithRegex(search_item).IsMatch(search), 1, 0)
-        Case Else
-            Return IIf(search_item.Equals(search), 1, 0)
-    End Select
-End Function
+    Private Function CountInSingleValueParam(valueOrLabel As String, _
+                                             searchItem As String, _
+                                             param As Object, _
+                                             matchStrategy As Char) As Integer
+        Dim search As Object
 
-Private Function StartsWithRegex(start As String) As _
-                                 System.Text.RegularExpressions.Regex
-    Return New _
-    System.Text.RegularExpressions.Regex("^" & EscapeRegexString(start))
-End Function
+        search = IIf(valueOrLabel = "value", param.Value, param.Label)
+        If Not TypeOf search Is String Then
+            Throw New ArgumentException("The parameter must be a string")
+        End If
+        Select Case matchStrategy
+            Case "C" ' Contains
+                ThrowUnlessSearchesAreSearchable({search}, searchItem)
+                Return IIf(search.Contains(searchItem), 1, 0)
+            Case "S" ' Starts-with
+                ThrowUnlessSearchesAreSearchable({search}, searchItem)
+                Return IIf(StartsWithRegex(searchItem).IsMatch(search), 1, 0)
+            Case Else ' Equals
+                Return IIf(searchItem.Equals(search), 1, 0)
+        End Select
+    End Function
 
-Private Function EscapeRegexString(unescaped As String) As String
-    ' Escape regex meta-characters in user-supplied string so that a regex can
-    ' be built from the string that matches the supplied characters literally
-    Dim esc_rgx As System.Text.RegularExpressions.Regex
-    esc_rgx = New System.Text.RegularExpressions.Regex("[|^$.()?+*\[\]\\]")
-    Return esc_rgx.Replace(unescaped, "\$&")
-End Function
-
-Private Sub ThrowIfSearchAndStrategyMismatched(search_item As Object, _
-                                               strategy As Integer)
-    If strategy < 2 And Not TypeOf search_item Is String Then
-        Throw New ArgumentException(
-            "The search item must be a string to use the match strategies " & _
-            "'Contains' (0) or 'Begins-with' (1). Pass 2 as the fourth" & _
-            "parameter to use exact matching")
-    End If
-End Sub
-
-Private Sub ThrowUnlessSearchesAreSearchable(searches As Object(), _
-                                             strategy As Integer)
-    If searches.Length < 1 Then
-        Throw New ArgumentException("The parameter you passed is empty!")
-    ElseIf strategy < 2 And Not TypeOf searches(0) Is String Then
-        Throw New ArgumentException(
-            "The parameter must have string values to use the " & _
-            "match strategies, 'Contains' or 'Begins-with'. Pass " & _
-            "2 as the fourth parameter to use exact matching")
-    End If
-End Sub
-
-Public Function isInParam(value_or_label As String, _
-                          search_item As Object, _
-                          param As Object) As Boolean
-    Dim lookups As Object() = _
-        IIf(value_or_label.toLower() = "value", param.Value, param.Label)
-    Return Array.IndexOf(lookups, search_item) >= 0
-End Function
+    Public Function IsInParam(valueOrLabel As String, _
+                              searchItem As Object, _
+                              param As Object) As Boolean
+        Dim lookups As Object() = _
+            IIf(valueOrLabel.ToLower() = "value", param.Value, param.Label)
+        Return Array.IndexOf(lookups, searchItem) >= 0
+    End Function
