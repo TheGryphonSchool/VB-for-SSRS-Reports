@@ -217,7 +217,7 @@
         Dim count As Integer = 0
 
         If vals = "" Then
-            Return 0
+            Return valIfBlank
         End If
         For Each val As String In Split(vals, ", ")
             If Not Double.TryParse(val, current) Then
