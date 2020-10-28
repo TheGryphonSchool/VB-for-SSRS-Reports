@@ -1,10 +1,30 @@
 'File produced by combining files using the Combine Files VScode extension
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\REPORT_6\MISCELLANEOUS.VB
-    Public Function roundIfFloat(float As String) As String
-        If Not float.Contains(".0") Then
-            Return float
+    ''' <summary>
+    '''     Sanatises a mark. Trims unnecessary decimal points and zeros from
+    '''     floats in Strings, or else, if there are points, appends them to
+    '''     the mark, with a `#` seperator
+    ''' </summary>
+    ''' <param name="mark">
+    '''     A mark, stored as a String
+    ''' </param>
+    ''' <param name="points">
+    '''     Points corresponding to a mark's position on a gradescale. If there
+    '''     is no relevant gradescale, <c>points</c> will be blank
+    ''' </param>
+    ''' <returns>
+    '''     If the mark is a float, e.g. "12.00000" => "12"
+    '''     Else if points aren't blank, e.g. "A*", "20" => "A*#20"
+    '''     ELse just the mark, unchanged
+    ''' </returns>
+    Public Function CleanValue(mark As String, points As String) As String
+        If mark.Contains(".0") Then
+            Return CStr(CInt(mark))
         End If
-        Return CStr(CInt(float))
+        If Not points.Equals("") Then
+            Return mark & "#" & points
+        End If
+        Return mark
     End Function
 
     ''' <summary>
@@ -103,13 +123,94 @@
     End Function
 
     ''' <summary>
-    '''     Calculate the average value of a series of 0 or more values in a string
+    '''     Retrieves all grades from a column, joining the grades in a comma
+    '''     -delimeted list
+    ''' </summary>
+    ''' <param name="groupLearnerColumn">
+    '''     IDs for a group, a learner (in the group) and a column, joined in
+    '''     this format: group|learner#column
+    ''' </param>
+    ''' <param name="param">
+    '''     A parameter containing group|learner#column[~anythingUnique] in its
+    '''     values, and `grades#points` (or just `grades`) in its values
+    ''' </param>
+    ''' <returns>
+    '''     A comma-delimited String of a strudent's grades in that column, in
+    '''     that group. e.g. "A*, A, A"
+    ''' </returns>
+    Public Function LookupGradesFromParam(groupLearnerColumn As String, _
+                                          param As Object) As String
+        Return LookupGradesFromParam(groupLearnerColumn, param, False)
+    End Function
+
+    ''' <summary>
+    '''     Retrieves all grades from a column, joining the grades in a comma
+    '''     -delimeted list, and, if appendPoints is True, appends a comma
+    '''     -delimeted list of the corresponding points, after a `#`
+    ''' </summary>
+    ''' <param name="groupLearnerColumn">
+    '''     IDs for a group, a learner (in the group) and a column, joined in
+    '''     this format: group|learner#column
+    ''' </param>
+    ''' <param name="param">
+    '''     A parameter containing group|learner#column(~anythingUnique) in its
+    '''     values, and grades#points in its values
+    ''' </param>
+    ''' <param name="appendPoints">
+    '''     If True, appends a comma-delimited string of the points for each
+    '''     looked-up grade
+    ''' </param>
+    ''' <returns>
+    '''     A comma-delimited String of a strudent's grades in that column, in
+    '''     that group. Possibly with the mean points afterward, seperated by
+    '''     a `#`. e.g. "A*, B, B", or "A*, B, B#9" with appendPoints
+    ''' </returns>
+    Public Function LookupGradesFromParam(groupLearnerColumn As String, _
+                                          param As Object, _
+                                          appendPoints As Boolean) As String
+        Dim results() As Object = _
+            LookupAllMatchingParams("value", groupLearnerColumn, param, "S")
+        Dim gradePointPair() As String
+        Dim grades As String = ""
+        Dim points As String = ""
+        Dim uniqueGradeList As new System.Collections.Generic.List(Of String)
+        For Each result As String In results
+            Dim include As Boolean = True
+            gradePointPair = result.Split("#")
+            For Each uniqueGrade As String In uniqueGradeList
+                If uniqueGrade = gradePointPair(0) Then
+                    include = False
+                    Exit For
+                End If
+            Next uniqueGrade
+            If include Then
+                uniqueGradeList.Add(gradePointPair(0))
+                grades += gradePointPair(0) & ", "
+                If gradePointPair.Length > 1 And appendPoints Then
+                    points += gradePointPair(1) & ", "
+                End If
+            End If
+        Next
+        If grades.Length > 2 Then
+            grades = Left(grades, grades.Length - 2)
+        End If
+        If appendPoints And points.Length > 2 Then
+            Return grades & "#" & _
+                EffectiveMark(Left(points, points.Length - 2), 0)
+        End If
+        Return grades
+    End Function
+
+    ''' <summary>
+    '''     Calculate the average value of a series of 0 or more values in a
+    '''     String
     ''' </summary>
     ''' <param name="vals">
     '''     A string containing 0 or more numeric values delimited by `, ` 
     ''' </param>
     ''' <returns>
-    '''     The average of <c>vals</c> as a double, or 40.0 if <c>vals</c> is empty
+    '''     The average of <c>vals</c> as a double, or 40.0 if <c>vals</c> is
+    '''     empty
     ''' </returns>
     Public Function EffectiveMark(vals As String, _
                                   Optional valIfBlank As Double = 40) As Double
