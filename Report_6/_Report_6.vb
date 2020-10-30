@@ -430,6 +430,9 @@ End Function
     '''         <item><term>E</term><description>Equals</description></item>
     '''         <item><term>S</term><description>Starts with</description></item>
     '''         <item><term>C</term><description>Contains</description></item>
+    '''         <item><term>R</term><description>
+    '''             String interpretable as a Regular Expression
+    '''         </description></item>
     '''     </list>
     ''' </param>
     ''' <returns>
@@ -481,6 +484,9 @@ End Function
     '''         <item><term>E</term><description>Equals</description></item>
     '''         <item><term>S</term><description>Starts with</description></item>
     '''         <item><term>C</term><description>Contains</description></item>
+    '''         <item><term>R</term><description>
+    '''             String interpretable as a Regular Expression
+    '''         </description></item>
     '''     </list>
     ''' </param>
     ''' <returns>
@@ -525,43 +531,78 @@ End Function
         End If
 
         Select Case matchStrategy
-            Case "C" ' Contains
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "C"C ' Contains
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 For i As Integer = 0 To param.Count - 1
-                    If searchItem.Contains(searches(i)) Then
+                    If searches(i).Contains(searchItem) Then
                         foundCount += 1
                         If foundCount.Equals(nthMatch) Then
-                            LookupParam = results(i)
-                            Exit Function
+                            Return results(i)
                         End If
                     End If
                 Next i
-            Case "S" ' Starts-with
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
-                Dim regexForStartsWith As System.Text.RegularExpressions.Regex = _
-                StartsWithRegex(searchItem)
-                For i As Integer = 0 To param.Count - 1
-                    If regexForStartsWith.IsMatch(searches(i)) Then
-                        foundCount += 1
-                        If foundCount.Equals(nthMatch) Then
-                            LookupParam = results(i)
-                            Exit Function
-                        End If
-                    End If
-                Next i
+            Case "R"C ' Regular Expression
+                ThrowUnlessSearchIsString(searchItem, matchStrategy)
+                Return SearchUsingRegex( _
+                    New System.Text.RegularExpressions.Regex(searchItem), _
+                    searches, results, nthMatch, matchStrategy)
+            Case "S"C ' Starts-with
+                ThrowUnlessSearchIsString(searchItem, matchStrategy)
+                Return SearchUsingRegex(StartsWithRegex(searchItem), searches, _
+                                        results, nthMatch, matchStrategy)
             Case Else ' Equals
                 For i As Integer = 0 To param.Count - 1
                     If searchItem.Equals(searches(i)) Then
                         foundCount += 1
                         If foundCount.Equals(nthMatch) Then
-                            LookupParam = results(i)
-                            Exit Function
+                            Return results(i)
                         End If
                     End If
                 Next i
         End Select
 
         Return Nothing ' searchItem was not found in parameter
+    End Function
+
+    ''' <summary>
+    '''     Use a regular expression to look through an array of <C>searches</C>
+    '''     until <C>nthMatch</C> matches are found. The element of the
+    '''     <C>results</C> array at the same index is returned.
+    ''' </summary>
+    ''' <param name="regex">A regular expression, Regex object</param>
+    ''' <param name="searches">
+    '''     An array of Strings to search in. Must be the same length as the
+    '''     <C>results</C> array
+    ''' </param>
+    ''' <param name="results">
+    '''     An array of objects, one of which will be returned. Must be the same
+    '''     length as the <C>results</C> array.
+    ''' </param>
+    ''' <param name="nthMatch">
+    '''     The number of matches that must be found to return a result
+    ''' </param>
+    ''' <returns>
+    '''     If <C>nthMatch</C> matches are found, returns the object in
+    '''     <c>results</c> at the same position as the last match in
+    '''     <C>searches</C>. Else, returns Nothing.
+    ''' </returns>
+    Private Function SearchUsingRegex( _
+            regex As System.Text.RegularExpressions.Regex, _
+            searches As Object(), _
+            results As Object(), _
+            nthMatch As Integer, _
+            matchStrategy As Char) As Object
+        Dim foundCount As Integer
+        ThrowUnlessSearchesAreStrings(searches, matchStrategy)
+        For i As Integer = 0 To searches.Length - 1
+            If regex.IsMatch(searches(i)) Then
+                foundCount += 1
+                If foundCount.Equals(nthMatch) Then
+                    Return results(i)
+                End If
+            End If
+        Next i
+        Return Nothing
     End Function
 
     ''' <summary>
@@ -693,15 +734,15 @@ End Function
         End If
 
         Select Case matchStrategy
-            Case "C" ' Contains
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "C"C ' Contains
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 For i As Integer = 0 To param.Count - 1
                     If searches(i).Contains(searchItem) Then
                         finds.Add(results(i))
                     End If
                 Next i
-            Case "S" ' Starts-with
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "S"C ' Starts-with
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 Dim regexForStartsWith As System.Text.RegularExpressions.Regex = _
                 StartsWithRegex(searchItem)
                 For i As Integer = 0 To param.Count - 1
@@ -723,10 +764,11 @@ End Function
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\SEARCH_PARAMS.VB
     ' Dependent on utilities/param_helpers.vb
     ' It must be combined if this file is
+
     Public Function CountMatchingParams(valueOrLabel As String, _
                                         searchItem As Object, _
                                         param As Object) As Integer
-        Return CountMatchingParams(valueOrLabel, searchItem, param, "E")
+        Return CountMatchingParams(valueOrLabel, searchItem, param)
     End Function
 
     Public Function CountMatchingParams(valueOrLabel As String, _
@@ -744,15 +786,15 @@ End Function
         End If
         searches = IIf(valueOrLabel = "value", param.Value, param.Label)
         Select Case matchStrategy
-            Case "C" ' Contains
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "C"C ' Contains
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 For i As Integer = 0 To param.Count - 1
                     If searches(i).Contains(searchItem) Then
                         foundCount += 1
                     End If
                 Next i
-            Case "S" ' Starts-with
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "S"C ' Starts-with
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 regexForStartsWith = StartsWithRegex(searchItem)
                 For i As Integer = 0 To param.Count - 1
                     If regexForStartsWith.IsMatch(searches(i)) Then
@@ -781,10 +823,10 @@ End Function
         End If
         Select Case matchStrategy
             Case "C" ' Contains
-                ThrowUnlessSearchesAreSearchable({search}, searchItem)
+                ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
                 Return IIf(search.Contains(searchItem), 1, 0)
             Case "S" ' Starts-with
-                ThrowUnlessSearchesAreSearchable({search}, searchItem)
+                ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
                 Return IIf(StartsWithRegex(searchItem).IsMatch(search), 1, 0)
             Case Else ' Equals
                 Return IIf(searchItem.Equals(search), 1, 0)
@@ -814,15 +856,39 @@ End Function
         Return escRgx.Replace(unescaped, "\$&")
     End Function
 
-    Private Sub ThrowUnlessSearchesAreSearchable(searches As Object(), _
-                                                 searchItem As Object)
-        Dim ADVICE As String = "to use the match strategies 'Contains'('C') or 'Starts-with' " & _
-        "('S'). Omit the matchStrategy argument to use exact matching."
-        If Not TypeOf searchItem Is String Then
-            Throw New ArgumentException( _
-                "The search item must be a string " & ADVICE)
-        ElseIf Not TypeOf searches(0) Is String Then
-            Throw New ArgumentException( _
-                "The parameter must have string values " & ADVICE)
-        End If
+    Private Sub ThrowIfMatchStrategyTypeConflict(searches As Object(), _
+                                                 searchItem As Object, _
+                                                 matchStrategy As Char)
+        ThrowUnlessSearchIsString(searchItem, matchStrategy)
+        ThrowUnlessSearchesAreStrings(searches, matchStrategy)
     End Sub
+
+    Private Sub ThrowUnlessSearchIsString(searchItem As Object, _
+                                          matchStrategy As Char)
+        If TypeOf searchItem Is String Then Exit Sub
+        Throw New ArgumentException(MatchStrategyExceptionMessage( _
+            "The search item must be a string", matchStrategy))
+    End Sub
+
+    Private Sub ThrowUnlessSearchesAreStrings(searches As Object(), _
+                                              matchStrategy As Char)
+        If TypeOf searches(0) Is String Then Exit Sub
+        Throw New ArgumentException(MatchStrategyExceptionMessage( _
+            "The parameter must have string values", matchStrategy))
+    End Sub
+
+    Private Function MatchStrategyExceptionMessage(problemStatement As String, _
+                                                   matchStrategy As Char) As String
+        Dim strategyDescription As String
+        Select Case matchStrategy
+            Case "C"C
+                strategyDescription = "'Contains' ('C')"
+            Case "S"C
+                strategyDescription = "'Starts-with' ('S')"
+            Case Else
+                strategyDescription = "'Regular Expression' ('R')"
+        End Select
+        Return problemStatement & " to use the match strategy " & _
+            strategyDescription & _
+            ". Omit the matchStrategy argument to use exact matching."
+    End Function

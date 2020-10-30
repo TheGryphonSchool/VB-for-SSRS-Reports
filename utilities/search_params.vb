@@ -1,9 +1,10 @@
     ' Dependent on utilities/param_helpers.vb
     ' It must be combined if this file is
+
     Public Function CountMatchingParams(valueOrLabel As String, _
                                         searchItem As Object, _
                                         param As Object) As Integer
-        Return CountMatchingParams(valueOrLabel, searchItem, param, "E")
+        Return CountMatchingParams(valueOrLabel, searchItem, param)
     End Function
 
     Public Function CountMatchingParams(valueOrLabel As String, _
@@ -21,15 +22,15 @@
         End If
         searches = IIf(valueOrLabel = "value", param.Value, param.Label)
         Select Case matchStrategy
-            Case "C" ' Contains
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "C"C ' Contains
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 For i As Integer = 0 To param.Count - 1
                     If searches(i).Contains(searchItem) Then
                         foundCount += 1
                     End If
                 Next i
-            Case "S" ' Starts-with
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "S"C ' Starts-with
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 regexForStartsWith = StartsWithRegex(searchItem)
                 For i As Integer = 0 To param.Count - 1
                     If regexForStartsWith.IsMatch(searches(i)) Then
@@ -58,10 +59,10 @@
         End If
         Select Case matchStrategy
             Case "C" ' Contains
-                ThrowUnlessSearchesAreSearchable({search}, searchItem)
+                ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
                 Return IIf(search.Contains(searchItem), 1, 0)
             Case "S" ' Starts-with
-                ThrowUnlessSearchesAreSearchable({search}, searchItem)
+                ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
                 Return IIf(StartsWithRegex(searchItem).IsMatch(search), 1, 0)
             Case Else ' Equals
                 Return IIf(searchItem.Equals(search), 1, 0)

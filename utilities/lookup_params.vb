@@ -100,6 +100,9 @@
     '''         <item><term>E</term><description>Equals</description></item>
     '''         <item><term>S</term><description>Starts with</description></item>
     '''         <item><term>C</term><description>Contains</description></item>
+    '''         <item><term>R</term><description>
+    '''             String interpretable as a Regular Expression
+    '''         </description></item>
     '''     </list>
     ''' </param>
     ''' <returns>
@@ -151,6 +154,9 @@
     '''         <item><term>E</term><description>Equals</description></item>
     '''         <item><term>S</term><description>Starts with</description></item>
     '''         <item><term>C</term><description>Contains</description></item>
+    '''         <item><term>R</term><description>
+    '''             String interpretable as a Regular Expression
+    '''         </description></item>
     '''     </list>
     ''' </param>
     ''' <returns>
@@ -195,43 +201,78 @@
         End If
 
         Select Case matchStrategy
-            Case "C" ' Contains
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "C"C ' Contains
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 For i As Integer = 0 To param.Count - 1
-                    If searchItem.Contains(searches(i)) Then
+                    If searches(i).Contains(searchItem) Then
                         foundCount += 1
                         If foundCount.Equals(nthMatch) Then
-                            LookupParam = results(i)
-                            Exit Function
+                            Return results(i)
                         End If
                     End If
                 Next i
-            Case "S" ' Starts-with
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
-                Dim regexForStartsWith As System.Text.RegularExpressions.Regex = _
-                StartsWithRegex(searchItem)
-                For i As Integer = 0 To param.Count - 1
-                    If regexForStartsWith.IsMatch(searches(i)) Then
-                        foundCount += 1
-                        If foundCount.Equals(nthMatch) Then
-                            LookupParam = results(i)
-                            Exit Function
-                        End If
-                    End If
-                Next i
+            Case "R"C ' Regular Expression
+                ThrowUnlessSearchIsString(searchItem, matchStrategy)
+                Return SearchUsingRegex( _
+                    New System.Text.RegularExpressions.Regex(searchItem), _
+                    searches, results, nthMatch, matchStrategy)
+            Case "S"C ' Starts-with
+                ThrowUnlessSearchIsString(searchItem, matchStrategy)
+                Return SearchUsingRegex(StartsWithRegex(searchItem), searches, _
+                                        results, nthMatch, matchStrategy)
             Case Else ' Equals
                 For i As Integer = 0 To param.Count - 1
                     If searchItem.Equals(searches(i)) Then
                         foundCount += 1
                         If foundCount.Equals(nthMatch) Then
-                            LookupParam = results(i)
-                            Exit Function
+                            Return results(i)
                         End If
                     End If
                 Next i
         End Select
 
         Return Nothing ' searchItem was not found in parameter
+    End Function
+
+    ''' <summary>
+    '''     Use a regular expression to look through an array of <C>searches</C>
+    '''     until <C>nthMatch</C> matches are found. The element of the
+    '''     <C>results</C> array at the same index is returned.
+    ''' </summary>
+    ''' <param name="regex">A regular expression, Regex object</param>
+    ''' <param name="searches">
+    '''     An array of Strings to search in. Must be the same length as the
+    '''     <C>results</C> array
+    ''' </param>
+    ''' <param name="results">
+    '''     An array of objects, one of which will be returned. Must be the same
+    '''     length as the <C>results</C> array.
+    ''' </param>
+    ''' <param name="nthMatch">
+    '''     The number of matches that must be found to return a result
+    ''' </param>
+    ''' <returns>
+    '''     If <C>nthMatch</C> matches are found, returns the object in
+    '''     <c>results</c> at the same position as the last match in
+    '''     <C>searches</C>. Else, returns Nothing.
+    ''' </returns>
+    Private Function SearchUsingRegex( _
+            regex As System.Text.RegularExpressions.Regex, _
+            searches As Object(), _
+            results As Object(), _
+            nthMatch As Integer, _
+            matchStrategy As Char) As Object
+        Dim foundCount As Integer
+        ThrowUnlessSearchesAreStrings(searches, matchStrategy)
+        For i As Integer = 0 To searches.Length - 1
+            If regex.IsMatch(searches(i)) Then
+                foundCount += 1
+                If foundCount.Equals(nthMatch) Then
+                    Return results(i)
+                End If
+            End If
+        Next i
+        Return Nothing
     End Function
 
     ''' <summary>
@@ -363,15 +404,15 @@
         End If
 
         Select Case matchStrategy
-            Case "C" ' Contains
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "C"C ' Contains
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 For i As Integer = 0 To param.Count - 1
                     If searches(i).Contains(searchItem) Then
                         finds.Add(results(i))
                     End If
                 Next i
-            Case "S" ' Starts-with
-                ThrowUnlessSearchesAreSearchable(searches, searchItem)
+            Case "S"C ' Starts-with
+                ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
                 Dim regexForStartsWith As System.Text.RegularExpressions.Regex = _
                 StartsWithRegex(searchItem)
                 For i As Integer = 0 To param.Count - 1
