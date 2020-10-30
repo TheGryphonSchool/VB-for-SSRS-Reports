@@ -119,7 +119,7 @@
                                     LookupAndJoinMarksFromParam.Length - 2)
         End Select
     End Function
-
+    
     ''' <summary>
     '''     Retrieves all grades from a column, joining the grades in a comma
     '''     -delimeted list
@@ -139,6 +139,31 @@
     Public Function LookupGradesFromParam(groupLearnerColumn As String, _
                                           param As Object) As String
         Return LookupGradesFromParam(groupLearnerColumn, param, False)
+    End Function
+    
+    ''' <summary>
+    '''     Use this version for early return if the column param is empty
+    ''' </summary>
+    ''' <param name="groupLearner">
+    '''     IDs for a group, a learner (in the group) and a column, joined in
+    '''     this format: group|learner#
+    ''' </param>
+    ''' <param name="column">
+    '''     ID of a column. If this is empty, the method will return blank.
+    ''' </param>
+    ''' <param name="param">
+    '''     A parameter containing group|learner#column[~anythingUnique] in its
+    '''     values, and `grades#points` (or just `grades`) in its values
+    ''' </param>
+    ''' <returns>
+    '''     A comma-delimited String of a strudent's grades in that column, in
+    '''     that group. e.g. "A*, A, A"
+    ''' </returns>
+    Public Function LookupGradesFromParam(groupLearner As String, _
+                                          column As String, _
+                                          param As Object) As String
+        If column Is Nothing OrElse column = "" Then Return ""
+        Return LookupGradesFromParam(groupLearner & Column, param, False)
     End Function
 
     ''' <summary>
@@ -172,6 +197,7 @@
         Dim grades As String = ""
         Dim points As String = ""
         Dim uniqueGradeList As new System.Collections.Generic.List(Of String)
+'       Concatenate only unique grades and points
         For Each result As String In results
             Dim include As Boolean = True
             gradePointPair = result.Split("#")
@@ -189,6 +215,7 @@
                 End If
             End If
         Next
+'       Trim dangling delimeters
         If grades.Length > 2 Then
             grades = Left(grades, grades.Length - 2)
         End If
@@ -200,15 +227,13 @@
     End Function
 
     ''' <summary>
-    '''     Calculate the average value of a series of 0 or more values in a
-    '''     String
+    '''     Calculate the average value of a series of 0 or more values in a string
     ''' </summary>
     ''' <param name="vals">
     '''     A string containing 0 or more numeric values delimited by `, ` 
     ''' </param>
     ''' <returns>
-    '''     The average of <c>vals</c> as a double, or 40.0 if <c>vals</c> is
-    '''     empty
+    '''     The average of <c>vals</c> as a double, or 40.0 if <c>vals</c> is empty
     ''' </returns>
     Public Function EffectiveMark(vals As String, _
                                   Optional valIfBlank As Double = 40) As Double
