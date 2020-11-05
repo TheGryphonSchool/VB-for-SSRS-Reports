@@ -790,6 +790,13 @@ End Function
     ' Dependent on utilities/param_helpers.vb
     ' It must be combined if this file is
 
+    ''' <summary>
+    '''     Counts all Values/Labels (as sepecified) in a param that equal the
+    '''     <c>searchItem</c>. Beware that if the <c>searchItem</c> is an
+    '''     integer from a query, it will be a long (int64), meaning that params
+    '''     of type Integer (Int32) will not #equals them unless they are cast
+    '''     to an Integer.
+    ''' </summary>
     Public Function CountMatchingParams(valueOrLabel As String, _
                                         searchItem As Object, _
                                         param As Object) As Integer
