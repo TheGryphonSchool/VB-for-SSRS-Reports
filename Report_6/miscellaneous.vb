@@ -102,7 +102,7 @@
                                                 searchItem As String, _
                                                 param As Object) As String
         Dim results() As Object = _
-            LookupAllMatchingParams(valueOrLabel, searchItem, param, "S")
+            LookupAllMatchingParams(valueOrLabel, searchItem, param, "S"C)
         Select Case results.Length
             Case 0
                 Return ""
@@ -192,7 +192,7 @@
                                           param As Object, _
                                           appendPoints As Boolean) As String
         Dim results() As Object = _
-            LookupAllMatchingParams("value", groupLearnerColumn, param, "S")
+            LookupAllMatchingParams("value", groupLearnerColumn, param, "S"C)
         Dim gradePointPair() As String
         Dim grades As String = ""
         Dim points As String = ""

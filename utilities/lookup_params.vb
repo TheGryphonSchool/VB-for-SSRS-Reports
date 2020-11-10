@@ -33,7 +33,7 @@
     Public Function LookupParam(valueOrLabel As String, _
                                 searchItem As Object, _
                                 param As Object) As Object
-        Return LookupParam(valueOrLabel, searchItem, param, 1, "E")
+        Return LookupParam(valueOrLabel, searchItem, param, 1, "E"C)
     End Function
 
     ''' <summary>
@@ -74,7 +74,7 @@
                                 searchItem As Object, _
                                 param As Object, _
                                 nthMatch As Integer) As Object
-        Return LookupParam(valueOrLabel, searchItem, param, nthMatch, "E")
+        Return LookupParam(valueOrLabel, searchItem, param, nthMatch, "E"C)
     End Function
 
     ''' <summary>
@@ -345,7 +345,7 @@
     Public Function LookupAllMatchingParams(valueOrLabel As String, _
                                             searchItem As Object, _
                                             param As Object) As Object()
-        Return LookupAllMatchingParams(valueOrLabel, searchItem, param, "E")
+        Return LookupAllMatchingParams(valueOrLabel, searchItem, param, "E"C)
     End Function
 
     ''' <summary>

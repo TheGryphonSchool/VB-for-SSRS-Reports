@@ -11,7 +11,7 @@
     Public Function CountMatchingParams(valueOrLabel As String, _
                                         searchItem As Object, _
                                         param As Object) As Integer
-        Return CountMatchingParams(valueOrLabel, searchItem, param)
+        Return CountMatchingParams(valueOrLabel, searchItem, param, "E"C)
     End Function
 
     Public Function CountMatchingParams(valueOrLabel As String, _
@@ -65,10 +65,10 @@
             Throw New ArgumentException("The parameter must be a string")
         End If
         Select Case matchStrategy
-            Case "C" ' Contains
+            Case "C"C ' Contains
                 ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
                 Return IIf(search.Contains(searchItem), 1, 0)
-            Case "S" ' Starts-with
+            Case "S"C ' Starts-with
                 ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
                 Return IIf(StartsWithRegex(searchItem).IsMatch(search), 1, 0)
             Case Else ' Equals

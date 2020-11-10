@@ -104,7 +104,7 @@
                                                 searchItem As String, _
                                                 param As Object) As String
         Dim results() As Object = _
-            LookupAllMatchingParams(valueOrLabel, searchItem, param, "S")
+            LookupAllMatchingParams(valueOrLabel, searchItem, param, "S"C)
         Select Case results.Length
             Case 0
                 Return ""
@@ -194,7 +194,7 @@
                                           param As Object, _
                                           appendPoints As Boolean) As String
         Dim results() As Object = _
-            LookupAllMatchingParams("value", groupLearnerColumn, param, "S")
+            LookupAllMatchingParams("value", groupLearnerColumn, param, "S"C)
         Dim gradePointPair() As String
         Dim grades As String = ""
         Dim points As String = ""
@@ -388,7 +388,7 @@ End Function
     Public Function LookupParam(valueOrLabel As String, _
                                 searchItem As Object, _
                                 param As Object) As Object
-        Return LookupParam(valueOrLabel, searchItem, param, 1, "E")
+        Return LookupParam(valueOrLabel, searchItem, param, 1, "E"C)
     End Function
 
     ''' <summary>
@@ -429,7 +429,7 @@ End Function
                                 searchItem As Object, _
                                 param As Object, _
                                 nthMatch As Integer) As Object
-        Return LookupParam(valueOrLabel, searchItem, param, nthMatch, "E")
+        Return LookupParam(valueOrLabel, searchItem, param, nthMatch, "E"C)
     End Function
 
     ''' <summary>
@@ -700,7 +700,7 @@ End Function
     Public Function LookupAllMatchingParams(valueOrLabel As String, _
                                             searchItem As Object, _
                                             param As Object) As Object()
-        Return LookupAllMatchingParams(valueOrLabel, searchItem, param, "E")
+        Return LookupAllMatchingParams(valueOrLabel, searchItem, param, "E"C)
     End Function
 
     ''' <summary>
@@ -800,7 +800,7 @@ End Function
     Public Function CountMatchingParams(valueOrLabel As String, _
                                         searchItem As Object, _
                                         param As Object) As Integer
-        Return CountMatchingParams(valueOrLabel, searchItem, param)
+        Return CountMatchingParams(valueOrLabel, searchItem, param, "E"C)
     End Function
 
     Public Function CountMatchingParams(valueOrLabel As String, _
@@ -854,10 +854,10 @@ End Function
             Throw New ArgumentException("The parameter must be a string")
         End If
         Select Case matchStrategy
-            Case "C" ' Contains
+            Case "C"C ' Contains
                 ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
                 Return IIf(search.Contains(searchItem), 1, 0)
-            Case "S" ' Starts-with
+            Case "S"C ' Starts-with
                 ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
                 Return IIf(StartsWithRegex(searchItem).IsMatch(search), 1, 0)
             Case Else ' Equals
