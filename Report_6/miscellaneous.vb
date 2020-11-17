@@ -30,36 +30,15 @@
     '''     <c>searchStart + searchEnd</c>, and joins the corresponding
     '''     Labels/Values.
     ''' </summary>
-    ''' <param name="valueOrLabel">
-    '''     Either the word 'value' or 'label' as a string (using any case).
-    '''     If "value" is passed, the param's Values are searched for matches and
-    '''     the its Label at the matching posisitions are returned.
-    '''     If "label" passed, searches the Labels and returns the Values.
-    ''' </param>
     ''' <param name="searchStart">
     '''     The 1st part of the string to search for in the param.
     ''' </param>
     ''' <param name="searchEnd">
     '''     The 2nd part of the string to search for in the param. If this
     '''     string is empty, an empty String is returned. If the caller doesn't
-    '''     want this option, they should use the other overloaded.
+    '''     want this option, they should use the other overload.
     '''     <see cref="Miscellaneous.LookupAndJoinMarksFromParam(String, String, Object)"/>
     ''' </param>
-    ''' <param name="param">
-    '''     An SSRS parameter containing both Values and Labels. A single-value
-    '''     param is acceptable, but it must have Strings in the side being
-    '''     searched in.
-    ''' </param>
-    ''' <returns>
-    '''     The Labels/Values in the same positions in the param as the
-    '''     Values/Labels that matched, but joined into a ", " delimited String.
-    '''     (If none matched, the string is empty.)
-    ''' </returns>
-    ''' <exception cref="System.ArgumentException">
-    '''     Thrown if a 'contains' or 'starts-with' match-strategy is selected, but
-    '''     either the searchItem or the param's values/labels (whichever is being
-    '''     searched) is not a String.
-    ''' </exception> 
     Public Function LookupAndJoinMarksFromParam(valueOrLabel As String, _
                                                 searchStart As String, _
                                                 searchEnd As String, _
@@ -78,8 +57,8 @@
     ''' </summary>
     ''' <param name="valueOrLabel">
     '''     Either the word 'value' or 'label' as a string (using any case).
-    '''     If "value" is passed, the param's Values are searched for matches and
-    '''     the its Label at the matching posisitions are returned.
+    '''     If "value" is passed, the param's Values are searched for matches
+    '''     and its Label at the matching posisitions are returned.
     '''     If "label" passed, searches the Labels and returns the Values.
     ''' </param>
     ''' <param name="searchItem">The string to search for in the param.</param>
@@ -119,7 +98,7 @@
                                     LookupAndJoinMarksFromParam.Length - 2)
         End Select
     End Function
-    
+
     ''' <summary>
     '''     Retrieves all grades from a column, joining the grades in a comma
     '''     -delimeted list
@@ -140,7 +119,7 @@
                                           param As Object) As String
         Return LookupGradesFromParam(groupLearnerColumn, param, False)
     End Function
-    
+
     ''' <summary>
     '''     Use this version for early return if the column param is empty
     ''' </summary>
@@ -227,13 +206,14 @@
     End Function
 
     ''' <summary>
-    '''     Calculate the average value of a series of 0 or more values in a string
+    '''     Calculate the average value of any values in a string
     ''' </summary>
     ''' <param name="vals">
     '''     A string containing 0 or more numeric values delimited by `, ` 
     ''' </param>
     ''' <returns>
-    '''     The average of <c>vals</c> as a double, or 40.0 if <c>vals</c> is empty
+    '''     Average of <c>vals</c> as a double, or <c>valIfBlank</c> if
+    '''     <c>vals</c> is empty
     ''' </returns>
     Public Function EffectiveMark(vals As String, _
                                   Optional valIfBlank As Double = 40) As Double

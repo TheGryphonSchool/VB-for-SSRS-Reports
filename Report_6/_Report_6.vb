@@ -32,36 +32,15 @@
     '''     <c>searchStart + searchEnd</c>, and joins the corresponding
     '''     Labels/Values.
     ''' </summary>
-    ''' <param name="valueOrLabel">
-    '''     Either the word 'value' or 'label' as a string (using any case).
-    '''     If "value" is passed, the param's Values are searched for matches and
-    '''     the its Label at the matching posisitions are returned.
-    '''     If "label" passed, searches the Labels and returns the Values.
-    ''' </param>
     ''' <param name="searchStart">
     '''     The 1st part of the string to search for in the param.
     ''' </param>
     ''' <param name="searchEnd">
     '''     The 2nd part of the string to search for in the param. If this
     '''     string is empty, an empty String is returned. If the caller doesn't
-    '''     want this option, they should use the other overloaded.
+    '''     want this option, they should use the other overload.
     '''     <see cref="Miscellaneous.LookupAndJoinMarksFromParam(String, String, Object)"/>
     ''' </param>
-    ''' <param name="param">
-    '''     An SSRS parameter containing both Values and Labels. A single-value
-    '''     param is acceptable, but it must have Strings in the side being
-    '''     searched in.
-    ''' </param>
-    ''' <returns>
-    '''     The Labels/Values in the same positions in the param as the
-    '''     Values/Labels that matched, but joined into a ", " delimited String.
-    '''     (If none matched, the string is empty.)
-    ''' </returns>
-    ''' <exception cref="System.ArgumentException">
-    '''     Thrown if a 'contains' or 'starts-with' match-strategy is selected, but
-    '''     either the searchItem or the param's values/labels (whichever is being
-    '''     searched) is not a String.
-    ''' </exception> 
     Public Function LookupAndJoinMarksFromParam(valueOrLabel As String, _
                                                 searchStart As String, _
                                                 searchEnd As String, _
@@ -80,8 +59,8 @@
     ''' </summary>
     ''' <param name="valueOrLabel">
     '''     Either the word 'value' or 'label' as a string (using any case).
-    '''     If "value" is passed, the param's Values are searched for matches and
-    '''     the its Label at the matching posisitions are returned.
+    '''     If "value" is passed, the param's Values are searched for matches
+    '''     and its Label at the matching posisitions are returned.
     '''     If "label" passed, searches the Labels and returns the Values.
     ''' </param>
     ''' <param name="searchItem">The string to search for in the param.</param>
@@ -121,7 +100,7 @@
                                     LookupAndJoinMarksFromParam.Length - 2)
         End Select
     End Function
-    
+
     ''' <summary>
     '''     Retrieves all grades from a column, joining the grades in a comma
     '''     -delimeted list
@@ -142,7 +121,7 @@
                                           param As Object) As String
         Return LookupGradesFromParam(groupLearnerColumn, param, False)
     End Function
-    
+
     ''' <summary>
     '''     Use this version for early return if the column param is empty
     ''' </summary>
@@ -229,13 +208,14 @@
     End Function
 
     ''' <summary>
-    '''     Calculate the average value of a series of 0 or more values in a string
+    '''     Calculate the average value of any values in a string
     ''' </summary>
     ''' <param name="vals">
     '''     A string containing 0 or more numeric values delimited by `, ` 
     ''' </param>
     ''' <returns>
-    '''     The average of <c>vals</c> as a double, or 40.0 if <c>vals</c> is empty
+    '''     Average of <c>vals</c> as a double, or <c>valIfBlank</c> if
+    '''     <c>vals</c> is empty
     ''' </returns>
     Public Function EffectiveMark(vals As String, _
                                   Optional valIfBlank As Double = 40) As Double
@@ -282,12 +262,116 @@ End Function
 
 Public Function SumArray(nums() As Object) As Integer
     Dim num As Integer
-	SumArray = 0
-	For Each o As Object In nums
+    SumArray = 0
+    For Each o As Object In nums
         If Integer.TryParse(o, num)
             SumArray += num
         End If
-	Next o
+    Next o
+End Function
+
+''' <summary>
+'''     Appends an object onto an array (without altering it) and returns
+'''     the new array.
+''' </summary>
+''' <returns>
+'''      An array resulting form appending <c>appendage</c> to
+'''      <c>leftArry</c>.
+''' </returns>
+Public Function ArrayMerge(leftArray As Object(), _
+        appendage As Object) As Object()
+    Return ArrayMerge(leftArray, New Object() { appendage })
+End Function
+
+''' <summary>
+'''     Prepends an object at the start of an array (without altering
+'''     it) and returns the new array.
+''' </summary>
+''' <returns>
+'''      An array resulting form appending <c>appendage</c> to
+'''      <c>leftArry</c>.
+''' </returns>
+Public Function ArrayMerge(prependage As Object, _
+        leftArray As Object()) As Object()
+    Return ArrayMerge(New Object() { prependage }, leftArray)
+End Function
+
+''' <summary>
+'''     Merges 2 arrays (without altering either) and returns the new
+'''     array. Will attempt a narrowing conversion (e.g. String to
+'''     Integer) if only one array is String(). If this converions
+'''     fails for any item, the opposing, widening converion will be
+'''     used. If neither arrays are of differing, non-string types,
+'''     both will be converted to String.
+''' </summary>
+''' <param name="leftArray"> The first array </param>
+''' <param name="rightArray"> The 2nd array </param>
+''' <returns>
+'''      An array resulting form appending <c>rightArray</c> to
+'''      <c>leftArry</c>.
+''' </returns>
+Public Function ArrayMerge(leftArray As Object(), _
+        rightArray As Object()) As Object()
+
+    Dim leftType, rightType As Type
+
+    If leftArray.Length = 0 Then Return rightArray
+    leftType = leftArray(0).GetType()
+    If rightArray.Length = 0 Then Return leftArray
+    rightType = rightArray(0).GetType()
+
+    leftArray = leftArray.Clone
+    rightArray = rightArray.Clone
+
+    If leftType.Equals(rightType) Then
+        ' pass
+    ElseIf leftType Is GetType(String) Then
+        If Not TryCastArray(leftArray, rightType) _
+            Then StringifyArray(rightArray)
+    ElseIf rightType Is GetType(String) Then
+        If Not TryCastArray(rightArray, leftType) _
+            Then StringifyArray(leftArray)
+    Else
+        StringifyArray(leftArray)
+        StringifyArray(rightArray)
+    End If
+    Return MergeSameTypeArrays(leftArray, rightArray)
+End Function
+
+Private Sub StringifyArray(inArray() As Object)
+    For i As Long = 0 To UBound(inArray)
+        inArray(i) = inArray(i).ToString()
+    Next
+End Sub
+
+Private Function TryCastArray(array() As Object, _
+                                destType As Type) As Boolean
+    Dim parseMethod As Reflection.MethodInfo = destType.GetMethod( _
+        "TryParse", New Type() { GetType(String), _
+        destType.MakeByRefType } _
+        )
+    Dim sourceDestTuple(1) As Object
+
+    If parseMethod Is Nothing Then Return False
+
+    For i As Long = 0 To UBound(array)
+        sourceDestTuple(0) = array(i)
+        If Not parseMethod.Invoke(Nothing, sourceDestTuple) Then _
+            Return False
+        array(i) = sourceDestTuple(1)
+    Next
+    Return True
+End Function
+
+Private Function MergeSameTypeArrays(leftArray As Object(), _
+                                        rightArray As Object()) As Object()
+
+    Dim leftLength As Long = leftArray.Length
+    Dim outArray(leftLength + UBound(rightArray)) As Object
+
+    Array.Copy(leftArray, outArray, leftLength)
+    Array.Copy(rightArray, 0, outArray, leftLength, rightArray.Length)
+    Return outArray
 End Function
 
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\COLOUR_SCALE.VB
