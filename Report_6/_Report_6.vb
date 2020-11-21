@@ -957,6 +957,37 @@ End Function
         Return Array.IndexOf(lookups, searchItem) >= 0
     End Function
 
+    ''' <summary>
+    '''     Tests whether the parameter has a position that matches both the
+    '''     value and the label supplied.
+    ''' </summary>
+    ''' <param name="value">
+    '''     The object being searched for in the parameter's Values
+    ''' </param>
+    ''' <param name="label">
+    '''     The String being searched for in the parameter's Labels
+    ''' </param>
+    ''' <param name="param">
+    '''     An SSRS parameter containing both Values and Labels.
+    '''     A single-value param is acceptable, and any type is fine.
+    ''' </param>
+    ''' <returns>
+    '''     True if matching value/label pair is found; false otherwise
+    ''' </returns>
+    Public Function VLPairIsInParam(value As Object, label As String, _
+                                    param As Object) As Boolean
+        If Not param.IsMultiValue Then Return param.Value.Equals(value) _
+            AndAlso param.Label.Equals(label)
+
+        Dim values As Object() = param.Value
+        ' Search Values first because they're more likely to be unique
+        For i As Integer = 0 To param.Count - 1
+            If values(i).Equals(value) AndAlso _
+                param.Label(i).Equals(label) Then Return True
+        Next
+        Return False
+    End Function
+
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\PARAM_HELPERS.VB
     Private Function StartsWithRegex(start As String) As _
                                  System.Text.RegularExpressions.Regex
