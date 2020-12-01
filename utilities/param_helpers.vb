@@ -1,17 +1,3 @@
-    Private Function StartsWithRegex(start As String) As _
-                                 System.Text.RegularExpressions.Regex
-        Return New _
-    System.Text.RegularExpressions.Regex("^" & EscapeRegexString(start))
-    End Function
-
-    Private Function EscapeRegexString(unescaped As String) As String
-        ' Escape regex meta-characters in user-supplied string so that a regex can
-        ' be built from the string that matches the supplied characters literally
-        Dim escRgx As System.Text.RegularExpressions.Regex
-        escRgx = New System.Text.RegularExpressions.Regex("[|^$.()?+*\[\]\\]")
-        Return escRgx.Replace(unescaped, "\$&")
-    End Function
-
     Private Sub ThrowIfMatchStrategyTypeConflict(searches As Object(), _
                                                  searchItem As Object, _
                                                  matchStrategy As Char)

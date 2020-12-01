@@ -20,12 +20,11 @@
                                         matchStrategy As Char) As Integer
         Dim searches As Object()
         Dim foundCount As Integer = 0
-        Dim regexForStartsWith As System.Text.RegularExpressions.Regex
 
         valueOrLabel = valueOrLabel.ToLower()
         If Not param.IsMultiValue Then
             Return CountInSingleValueParam(valueOrLabel, searchItem, _
-                                       param, matchStrategy)
+                                           param, matchStrategy)
         End If
         searches = IIf(valueOrLabel = "value", param.Value, param.Label)
         Select Case matchStrategy
@@ -38,9 +37,8 @@
                 Next i
             Case "S"C ' Starts-with
                 ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
-                regexForStartsWith = StartsWithRegex(searchItem)
                 For i As Integer = 0 To param.Count - 1
-                    If regexForStartsWith.IsMatch(searches(i)) Then
+                    If searches(i).StartsWith(searchItem) Then
                         foundCount += 1
                     End If
                 Next i
@@ -70,7 +68,7 @@
                 Return IIf(search.Contains(searchItem), 1, 0)
             Case "S"C ' Starts-with
                 ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
-                Return IIf(StartsWithRegex(searchItem).IsMatch(search), 1, 0)
+                Return IIf(search.StartsWith(searchItem), 1, 0)
             Case Else ' Equals
                 Return IIf(searchItem.Equals(search), 1, 0)
         End Select

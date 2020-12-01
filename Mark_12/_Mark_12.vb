@@ -203,130 +203,68 @@ End Function
 
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\LOOKUP_PARAMS.VB
     ' Dependent on utilities/param_helpers.vb
-    ' It must be combined if this file is used
 
     ''' <summary>
-    '''     Use param like a dict, finding the 1st item equalling the searchItem
+    '''     Find the 1st item equalling the searchItem
     ''' </summary>
-    ''' <param name="valueOrLabel">
-    '''     Either the word 'value' or 'label' as a string (using any case).
-    '''     If "value" is passed, the param's Values are searched for matches and
-    '''     the its Label at the matching posisition is returned.
-    '''     If "label" passed, searches the Labels and returns one of the Values.
-    ''' </param>
-    ''' <param name="searchItem">
-    '''     The thing being searched for in the param. This is expected to be the
-    '''     same type as the type as the param's values.
-    ''' </param>
-    ''' <param name="param">
-    '''     An SSRS parameter containing both Values and Labels.
-    '''     A single-value param is acceptable, and any type is fine.
-    ''' </param>
-    ''' <returns>
-    '''     <para>
-    '''         If a match is found: The label/value in the same position in the
-    '''         param as the value/label that matched.
-    '''     </para>
-    '''     <para>If a match is not found: <c>Nothing</c></para>
-    ''' </returns>
-    ''' <exception cref="System.ArgumentException">
-    '''     Thrown if a 'contains' or 'starts-with' match-strategy is selected, but
-    '''     either the searchItem or the param's values/labels (whichever is being
-    '''     searched) is not a String.
-    ''' </exception> 
     Public Function LookupParam(valueOrLabel As String, _
                                 searchItem As Object, _
                                 param As Object) As Object
-        Return LookupParam(valueOrLabel, searchItem, param, 1, "E"C)
+        Return LookupParam(valueOrLabel, searchItem, param, 1, "E"C, False)
     End Function
 
     ''' <summary>
-    '''     Use param like a dict, finding the Nth item equalling the searchItem
+    '''     Find the Nth item equalling the searchItem
     ''' </summary>
-    ''' <param name="valueOrLabel">
-    '''     Either the word 'value' or 'label' as a string (using any case).
-    '''     If "value" is passed, the param's Values are searched for matches and
-    '''     the its Label at the last matching posisition is returned.
-    '''     If "label" passed, searches the Labels and returns one of the Values.
-    ''' </param>
-    ''' <param name="searchItem">
-    '''     The thing being searched for in the param. This is expected to be the
-    '''     same type as the type as the param's values.
-    ''' </param>
-    ''' <param name="param">
-    '''     An SSRS parameter containing both Values and Labels.
-    '''     A single-value param is acceptable, and any type is fine.
-    ''' </param>
-    ''' <param name="nthMatch">
-    '''     When <c>nthMatch</c> matches are found, the value/label (as appropriate
-    '''     ) at the <c>nthMatch</c> mathing position is returned. If there are
-    '''     fewer than <c>nthMatch</c> matches, <c>Nothing</c> is returned.
-    ''' </param>
-    ''' <returns>
-    '''     <para>
-    '''         If a match is found: The label/value in the same position in the
-    '''         param as the value/label that matched.
-    '''     </para>
-    '''     <para>If a match is not found: <c>Nothing</c></para>
-    ''' </returns>
-    ''' <exception cref="System.ArgumentException">
-    '''     Thrown if a 'contains' or 'starts-with' match-strategy is selected, but
-    '''     either the searchItem or the param's values/labels (whichever is being
-    '''     searched) is not a String.
-    ''' </exception> 
     Public Function LookupParam(valueOrLabel As String, _
                                 searchItem As Object, _
                                 param As Object, _
                                 nthMatch As Integer) As Object
-        Return LookupParam(valueOrLabel, searchItem, param, nthMatch, "E"C)
+        Return LookupParam(valueOrLabel, searchItem, param, nthMatch, "E"C, False)
     End Function
 
     ''' <summary>
-    '''     Use param like a dict, finding the 1st item that matches the searchItem
-    '''     using the specified matchStrategy
-    ''' <param name="valueOrLabel">
-    '''     Either the word 'value' or 'label' as a string (using any case).
-    '''     If "value" is passed, the param's Values are searched for matches and
-    '''     the its Label at the matching posisition is returned.
-    '''     If "label" passed, searches the Labels and returns one of the Values.
-    ''' </param>
-    ''' <param name="searchItem">
-    '''     The thing being searched for in the param. This is expected to be the
-    '''     same type as the type as the param's values.
-    ''' </param>
-    ''' <param name="param">
-    '''     An SSRS parameter containing both Values and Labels.
-    '''     A single-value param is acceptable, and any type is fine.
-    ''' </param>
-    ''' <param name="matchStrategy">
-    '''      A character denoting the match-strategy; one of:
-    '''     <list type="bullet">
-    '''         <item><term>E</term><description>Equals</description></item>
-    '''         <item><term>S</term><description>Starts with</description></item>
-    '''         <item><term>C</term><description>Contains</description></item>
-    '''         <item><term>R</term><description>
-    '''             String interpretable as a Regular Expression
-    '''         </description></item>
-    '''     </list>
-    ''' </param>
-    ''' <returns>
-    '''     <para>
-    '''         If a match is found: The label/value in the same position in the
-    '''         param as the value/label that matched.
-    '''     </para>
-    '''     <para>If a match is not found: Nothing</para>
-    ''' </returns>
+    '''     Find the 1st item that matches the searchItem using the specified
+    '''     matchStrategy
     ''' </summary>
-    ''' <exception cref="System.ArgumentException">
-    '''     Thrown if a 'contains' or 'starts-with' match-strategy is selected, but
-    '''     either the searchItem or the param's values/labels (whichever is being
-    '''     searched) is not a String.
-    ''' </exception> 
     Public Function LookupParam(valueOrLabel As String, _
                                 searchItem As Object, _
                                 param As Object, _
                                 matchStrategy As Char) As Object
-        Return LookupParam(valueOrLabel, searchItem, param, 1, matchStrategy)
+        Return LookupParam(valueOrLabel, searchItem, param, 1, matchStrategy, False)
+    End Function
+
+    ''' <summary>
+    '''     Find the 1st item that equals the searchItem using Binary Search
+    ''' </summary>
+    Public Function LookupParam(valueOrLabel As String, _
+                                searchItem As Object, _
+                                param As Object, _
+                                useBinarySearch As Boolean) As Object
+        Return LookupParam(valueOrLabel, searchItem, param, 0, "E"C, useBinarySearch)
+    End Function
+
+    ''' <summary>
+    '''     Find the nth item that matches the searchItem using the specified matchStrategy
+    ''' </summary>
+    Public Function LookupParam(valueOrLabel As String, _
+                                searchItem As Object, _
+                                param As Object, _
+                                nthMatch As Integer, _
+                                matchStrategy As Char) As Object
+        Return LookupParam(valueOrLabel, searchItem, param, nthMatch, matchStrategy, False)
+    End Function
+
+    ''' <summary>
+    '''     Find the 1st item that matches the searchItem using the specified
+    '''     match strategy and Binary Search
+    ''' </summary>
+    Public Function LookupParam(valueOrLabel As String, _
+                                searchItem As Object, _
+                                param As Object, _
+                                matchStrategy As Char, _
+                                useBinarySearch As Boolean) As Object
+        Return LookupParam(valueOrLabel, searchItem, param, 0, matchStrategy, useBinarySearch)
     End Function
 
     ''' <summary>
@@ -363,6 +301,13 @@ End Function
     '''         </description></item>
     '''     </list>
     ''' </param>
+    ''' <param name="useBinarySearch">
+    '''     Pass true if the <c>param</c> is sorted by its <c>valueOrLabel</c>.
+    '''     If so, binary-search (O(log(n))) will be used. (Otherwise O(n).)
+    '''     Note that an SSRS query is gauranteed to be sorted by its first
+    '''     field iff it's in its own query group (i.e. the field name is
+    '''     repeated above the field.
+    ''' </param>
     ''' <returns>
     '''     <para>
     '''         If a match is found: The label/value in the same position in the
@@ -375,11 +320,13 @@ End Function
     '''     either the searchItem or the param's values/labels (whichever is being
     '''     searched) is not a String.
     ''' </exception> 
-    Private Function LookupParam(valueOrLabel As String, _
-                                 searchItem As Object, _
-                                 param As Object, _
-                                 nthMatch As Integer, _
-                                 matchStrategy As Char) As Object
+    Public Function LookupParam(valueOrLabel As String, _
+                                    searchItem As Object, _
+                                    param As Object, _
+                                    nthMatch As Integer, _
+                                    matchStrategy As Char, _
+                                    useBinarySearch As Boolean) _
+                                    As Object
         Dim searches As Object()
         Dim results As Object()
         Dim foundCount As Integer = 0
@@ -407,6 +354,7 @@ End Function
         Select Case matchStrategy
             Case "C"C ' Contains
                 ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
+                If useBinarySearch Then ThrowInvalidBinarySearch("Contains")
                 For i As Integer = 0 To param.Count - 1
                     If searches(i).Contains(searchItem) Then
                         foundCount += 1
@@ -417,14 +365,29 @@ End Function
                 Next i
             Case "R"C ' Regular Expression
                 ThrowUnlessSearchIsString(searchItem, matchStrategy)
+                If useBinarySearch Then ThrowInvalidBinarySearch("Regular Expression")
                 Return SearchUsingRegex( _
-                    New System.Text.RegularExpressions.Regex(searchItem), _
+                    New Text.RegularExpressions.Regex(searchItem), _
                     searches, results, nthMatch, matchStrategy)
             Case "S"C ' Starts-with
                 ThrowUnlessSearchIsString(searchItem, matchStrategy)
-                Return SearchUsingRegex(StartsWithRegex(searchItem), searches, _
-                                        results, nthMatch, matchStrategy)
+                If useBinarySearch Then Return BinSearchParam(searches,  _
+                    results, searchItem, nthMatch, New StartsWithComparer)
+                For i As Integer = 0 To param.Count - 1
+                    If searches(i).StartsWith(searchItem) Then
+                        foundCount += 1
+                        If foundCount.Equals(nthMatch) Then
+                            Return results(i)
+                        End If
+                    End If
+                Next i
             Case Else ' Equals
+                If useBinarySearch Then Return BinSearchParam( _
+                    searches, results, searchItem, nthMatch, _
+                    StringComparer.Create( _
+                        New Globalization.CultureInfo("en-EN"), False _
+                    ) _
+                )
                 For i As Integer = 0 To param.Count - 1
                     If searchItem.Equals(searches(i)) Then
                         foundCount += 1
@@ -437,6 +400,50 @@ End Function
 
         Return Nothing ' searchItem was not found in parameter
     End Function
+
+    Private Function BinSearchParam(searches As Object, _
+                                    results As Object, _
+                                    searchItem As Object, _
+                                    nthMatch As Integer, _
+                                    comparer As Collections.IComparer) As Object
+        Dim randMatch As Integer = _
+            Array.BinarySearch(searches, searchItem, comparer)
+        Return NthMatchFromAMatch(searches, results, searchItem, nthMatch, _
+                                  randMatch, comparer)
+    End Function
+
+    Private Function NthMatchFromAMatch(searches() As Object, _
+                                        results() As Object, _
+                                        searchItem As Object, _
+                                        nthMatch As Integer, _
+                                        matchIndex As Integer, _
+                                        comparer As Collections.IComparer) As Object
+    
+        If matchIndex < 0 Then Return Nothing
+        ' Return any match if the caller doesn't care:
+        If nthMatch < 1 Then Return results(matchIndex)
+
+        Dim firstIndex As Integer = matchIndex ' set as index of leftmost match:
+        While firstIndex > 0 AndAlso _
+                comparer.Compare(searches(firstIndex - 1), searchItem) = 0
+            firstIndex -= 1
+        End While
+        Dim nthMatchingIndex As Integer = firstIndex + nthMatch - 1
+        If nthMatchingIndex >= searches.Length OrElse _
+            nthMatchingIndex > matchIndex AndAlso _
+            comparer.Compare(searches(nthMatchingIndex), searchItem) <> 0 Then
+            ' Out of bounds or-else not a match
+            Return Nothing
+        End If
+        
+        Return results(nthMatchingIndex)
+    End Function
+
+    Private Sub ThrowInvalidBinarySearch(strategyName As String)
+        Throw New ArgumentException("You may not use binary-search with the '" _
+                                    & strategyName & "' match-strategy. Use " _
+                                    & "'Equals' or 'Starts-with' instead.")
+    End Sub
 
     ''' <summary>
     '''     Use a regular expression to look through an array of <C>searches</C>
@@ -461,7 +468,7 @@ End Function
     '''     <C>searches</C>. Else, returns Nothing.
     ''' </returns>
     Private Function SearchUsingRegex( _
-            regex As System.Text.RegularExpressions.Regex, _
+            regex As Text.RegularExpressions.Regex, _
             searches As Object(), _
             results As Object(), _
             nthMatch As Integer, _
@@ -478,6 +485,17 @@ End Function
         Next i
         Return Nothing
     End Function
+
+    Private Class StartsWithComparer
+        Implements Collections.IComparer
+
+        Public Function Compare(longString As Object, shortString As Object) _
+                As Integer Implements Collections.IComparer.Compare
+            If longString.StartsWith(shortString) Then Return 0
+
+            Return longString.CompareTo(shortString)
+        End Function
+    End Class
 
     ''' <summary>
     '''     Get the Nth Value from an SSRS parameter
@@ -509,8 +527,8 @@ End Function
     '''     any type, and it may have only Values (not Labels).
     ''' </param>
     Public Function LookupNthParam(valueOrLabel As String, _
-                                   number As Integer, _
-                                   param As Object) As Object
+                                    number As Integer, _
+                                    param As Object) As Object
         Dim results As Object() = _
             IIf(valueOrLabel.ToLower() = "value", param.Value, param.Label)
         If number <= param.Count Then
@@ -549,7 +567,7 @@ End Function
     Public Function LookupAllMatchingParams(valueOrLabel As String, _
                                             searchItem As Object, _
                                             param As Object) As Object()
-        Return LookupAllMatchingParams(valueOrLabel, searchItem, param, "E"C)
+        Return LookupAllMatchingParams(valueOrLabel, searchItem, param, "E")
     End Function
 
     ''' <summary>
@@ -617,10 +635,8 @@ End Function
                 Next i
             Case "S"C ' Starts-with
                 ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
-                Dim regexForStartsWith As System.Text.RegularExpressions.Regex = _
-                StartsWithRegex(searchItem)
                 For i As Integer = 0 To param.Count - 1
-                    If regexForStartsWith.IsMatch(searches(i)) Then
+                    If searches(i).StartsWith(searchItem) Then
                         finds.Add(results(i))
                     End If
                 Next i
@@ -634,7 +650,6 @@ End Function
 
         Return finds.ToArray()
     End Function
-
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\SEARCH_PARAMS.VB
     ' Dependent on utilities/param_helpers.vb
     ' It must be combined if this file is
@@ -658,12 +673,11 @@ End Function
                                         matchStrategy As Char) As Integer
         Dim searches As Object()
         Dim foundCount As Integer = 0
-        Dim regexForStartsWith As System.Text.RegularExpressions.Regex
 
         valueOrLabel = valueOrLabel.ToLower()
         If Not param.IsMultiValue Then
             Return CountInSingleValueParam(valueOrLabel, searchItem, _
-                                       param, matchStrategy)
+                                           param, matchStrategy)
         End If
         searches = IIf(valueOrLabel = "value", param.Value, param.Label)
         Select Case matchStrategy
@@ -676,9 +690,8 @@ End Function
                 Next i
             Case "S"C ' Starts-with
                 ThrowIfMatchStrategyTypeConflict(searches, searchItem, matchStrategy)
-                regexForStartsWith = StartsWithRegex(searchItem)
                 For i As Integer = 0 To param.Count - 1
-                    If regexForStartsWith.IsMatch(searches(i)) Then
+                    If searches(i).StartsWith(searchItem) Then
                         foundCount += 1
                     End If
                 Next i
@@ -708,7 +721,7 @@ End Function
                 Return IIf(search.Contains(searchItem), 1, 0)
             Case "S"C ' Starts-with
                 ThrowIfMatchStrategyTypeConflict({search}, searchItem, matchStrategy)
-                Return IIf(StartsWithRegex(searchItem).IsMatch(search), 1, 0)
+                Return IIf(search.StartsWith(searchItem), 1, 0)
             Case Else ' Equals
                 Return IIf(searchItem.Equals(search), 1, 0)
         End Select
@@ -754,20 +767,6 @@ End Function
     End Function
 
 'C:\USERS\ZAC\DOCUMENTS\PROJECTS\SSRS CODE\UTILITIES\PARAM_HELPERS.VB
-    Private Function StartsWithRegex(start As String) As _
-                                 System.Text.RegularExpressions.Regex
-        Return New _
-    System.Text.RegularExpressions.Regex("^" & EscapeRegexString(start))
-    End Function
-
-    Private Function EscapeRegexString(unescaped As String) As String
-        ' Escape regex meta-characters in user-supplied string so that a regex can
-        ' be built from the string that matches the supplied characters literally
-        Dim escRgx As System.Text.RegularExpressions.Regex
-        escRgx = New System.Text.RegularExpressions.Regex("[|^$.()?+*\[\]\\]")
-        Return escRgx.Replace(unescaped, "\$&")
-    End Function
-
     Private Sub ThrowIfMatchStrategyTypeConflict(searches As Object(), _
                                                  searchItem As Object, _
                                                  matchStrategy As Char)
