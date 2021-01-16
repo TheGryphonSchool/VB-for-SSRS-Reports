@@ -1,5 +1,5 @@
 ﻿Imports Microsoft.VisualStudio.TestTools.UnitTesting
-Imports DebugAssemblies.SSRSCode.Arrays
+Imports SSRSCode.SSRSCode.Arrays
 
 Namespace TestSSRSCode
     <TestClass>

@@ -1,6 +1,3 @@
-Imports Microsoft.VisualStudio.TestTools.UnitTesting
-Imports DebugAssemblies.SSRSCode.LookupParams
-
 Namespace TestSSRSCode
     Friend Class LookupParamTestCase
         Public searchItem As Object
