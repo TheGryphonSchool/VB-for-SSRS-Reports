@@ -2,16 +2,17 @@ Imports System.IO
 
 Module Deploy
     Sub Main()
-        Dim originalDirPath As String = Directory.GetParent(
-            Directory.GetCurrentDirectory()).Parent.Parent.FullName
-        Dim dependenciesPath As String = Path.Join(originalDirPath,
+        Dim projectDirPath As String =
+            New Text.RegularExpressions.Regex("(?<=DeploySSRSCustomCode).*") _
+            .Replace(Directory.GetCurrentDirectory(), "")
+        Dim dependenciesPath As String = Path.Join(projectDirPath,
                                                    "ReportDependencies.json")
         Dim ssrsDeployer As SSRSDeployer
 
         Try
-            Dim dependenciesFile As StreamReader = _
+            Dim dependenciesFile As StreamReader =
                 New StreamReader(dependenciesPath)
-            ssrsDeployer = New SSRSDeployer(originalDirPath, _
+            ssrsDeployer = New SSRSDeployer(projectDirPath,
                                             dependenciesFile.ReadToEnd())
         Catch Ex As Exception
             Throw New IOException("Tried to open 'ReportDependencies.json', " &
